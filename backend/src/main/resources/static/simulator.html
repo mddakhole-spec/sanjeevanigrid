@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanjeevaniGrid — Crisis Resource Simulator</title>
+    <meta name="description" content="Crisis resource simulation dashboard for hospital capacity planning. Statistical forecast tool for healthcare coordination.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1e2840;
+            --border: #2a3654;
+            --text-primary: #e8ecf4;
+            --text-secondary: #8892a8;
+            --text-muted: #5a6478;
+            --teal: #14b8a6;
+            --teal-light: #2dd4bf;
+            --teal-dark: #0d9488;
+            --teal-glow: rgba(20, 184, 166, 0.15);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.15);
+            --orange: #f59e0b;
+            --orange-glow: rgba(245, 158, 11, 0.15);
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.15);
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(20,184,166,0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app { position: relative; z-index: 1; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--teal), var(--blue));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 800; color: white;
+        }
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .header h1 span { color: var(--teal); }
+        .sandbox-badge {
+            background: var(--orange-glow);
+            color: var(--orange);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(245,158,11,0.3);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .disclaimer {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(59,130,246,0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+
+        /* Layout */
+        .main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
+
+        /* Presets Bar */
+        .presets-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .presets-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .preset-btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .preset-btn:hover {
+            border-color: var(--teal);
+            background: var(--teal-glow);
+            transform: translateY(-1px);
+        }
+        .preset-btn.active {
+            background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+            border-color: var(--teal);
+            color: white;
+            box-shadow: 0 4px 16px rgba(20,184,166,0.3);
+        }
+        .preset-btn .icon { font-size: 18px; }
+
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .full-width { grid-column: 1 / -1; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            transition: all 0.3s;
+        }
+        .card:hover { border-color: rgba(20,184,166,0.3); }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .kpi-card.critical { border-color: var(--red); background: var(--red-glow); }
+        .kpi-card.warning { border-color: var(--orange); background: var(--orange-glow); }
+        .kpi-card.good { border-color: var(--green); background: var(--green-glow); }
+        .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; }
+        .kpi-value { font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+        .kpi-card.critical .kpi-value { color: var(--red); }
+        .kpi-card.warning .kpi-value { color: var(--orange); }
+        .kpi-card.good .kpi-value { color: var(--green); }
+        .kpi-unit { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Sliders */
+        .sliders-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .slider-group { }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .slider-label span:first-child {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .slider-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--teal);
+            background: var(--teal-glow);
+            padding: 2px 10px;
+            border-radius: 6px;
+        }
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--teal), var(--teal-light));
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(20,184,166,0.4);
+            transition: transform 0.15s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .run-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+            color: white;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 12px;
+        }
+        .run-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(20,184,166,0.4);
+        }
+        .run-btn:active { transform: translateY(0); }
+
+        /* Heatmap */
+        .heatmap-container { overflow-x: auto; }
+        .heatmap {
+            display: grid;
+            gap: 2px;
+            min-width: 600px;
+        }
+        .heatmap-cell {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 3px;
+            transition: all 0.15s;
+            position: relative;
+            cursor: pointer;
+            min-width: 8px;
+            min-height: 8px;
+        }
+        .heatmap-cell:hover {
+            transform: scale(1.8);
+            z-index: 10;
+            box-shadow: 0 0 12px rgba(0,0,0,0.6);
+        }
+        .heatmap-row-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .heatmap-legend-bar {
+            width: 200px;
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #22c55e, #84cc16, #eab308, #f97316, #ef4444, #991b1b);
+        }
+
+        /* Alerts */
+        .alerts-panel { max-height: 360px; overflow-y: auto; }
+        .alert-item {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .alert-critical {
+            background: var(--red-glow);
+            border-left: 3px solid var(--red);
+            color: #fca5a5;
+        }
+        .alert-warning {
+            background: var(--orange-glow);
+            border-left: 3px solid var(--orange);
+            color: #fcd34d;
+        }
+        .alert-info {
+            background: rgba(59,130,246,0.1);
+            border-left: 3px solid var(--blue);
+            color: #93c5fd;
+        }
+        .alert-success {
+            background: var(--green-glow);
+            border-left: 3px solid var(--green);
+            color: #86efac;
+        }
+
+        /* Chart containers */
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: var(--teal);
+            color: white;
+        }
+        .tab:hover:not(.active) { color: var(--text-primary); }
+
+        /* Compare View */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .compare-vs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--teal);
+            padding-top: 40px;
+        }
+        .delta-positive { color: var(--green); }
+        .delta-negative { color: var(--red); }
+
+        /* Ward Tabs */
+        .ward-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .ward-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ward-tab.active {
+            background: var(--teal-glow);
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+
+        /* SSE Status */
+        .sse-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .sse-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: blink 2s infinite;
+        }
+        .sse-dot.disconnected { background: var(--red); animation: none; }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            max-width: 220px;
+            display: none;
+        }
+        .tooltip.visible { display: block; }
+        .tooltip-value { font-size: 16px; font-weight: 700; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--teal);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .grid-4 { grid-template-columns: 1fr 1fr; }
+            .compare-grid { grid-template-columns: 1fr; }
+            .compare-vs { padding: 8px 0; }
+        }
+        @media (max-width: 768px) {
+            .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+            .main { padding: 16px; }
+            .grid-4 { grid-template-columns: 1fr; }
+            .sliders-panel { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">S</div>
+                <h1>Sanjeevani<span>Grid</span> — Crisis Simulator</h1>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="disclaimer">ℹ️ Statistical forecast, not clinical advice</span>
+                <span class="sandbox-badge">SANDBOX MODE</span>
+                <div class="sse-status">
+                    <div class="sse-dot" id="sseDot"></div>
+                    <span id="sseLabel">Connecting…</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main" id="mainContent">
+            <!-- Presets Bar -->
+            <div class="presets-bar">
+                <span class="presets-label">Presets:</span>
+                <button class="preset-btn" onclick="loadPreset('flood')" id="preset-flood">
+                    <span class="icon">🌊</span> Monsoon Flood
+                </button>
+                <button class="preset-btn" onclick="loadPreset('dengue')" id="preset-dengue">
+                    <span class="icon">🦟</span> Dengue Outbreak
+                </button>
+                <button class="preset-btn" onclick="loadPreset('pileup')" id="preset-pileup">
+                    <span class="icon">🚗</span> Highway Pile-up
+                </button>
+                <button class="preset-btn" onclick="loadPreset('normal')" id="preset-normal">
+                    <span class="icon">📊</span> Normal Operations
+                </button>
+            </div>
+
+            <!-- View Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchView('dashboard')" id="tab-dashboard">Dashboard</button>
+                <button class="tab" onclick="switchView('compare')" id="tab-compare">Compare Scenarios</button>
+                <button class="tab" onclick="switchView('forecast')" id="tab-forecast">Forecast & Backtest</button>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard">
+                <!-- KPI Cards -->
+                <div class="grid-4" id="kpiCards">
+                    <div class="kpi-card" id="kpi-occupancy">
+                        <div class="kpi-label">Peak Occupancy</div>
+                        <div class="kpi-value">--</div>
+                        <div class="kpi-unit">percent</div>
+                    </div>
+                    <div class="kpi-card" id="kpi-turned-away">
+                        <div class="kpi-label">Patients Turned Away</div>
+                        <div class="kpi-value">--</div>
+                        <div class="kpi-unit">total</div>
+                    </div>
+                    <div class="kpi-card" id="kpi-hours90">
+                        <div class="kpi-label">Hours Above 90%</div>
+                        <div class="kpi-value">--</div>
+                        <div class="kpi-unit">of simulation</div>
+                    </div>
+                    <div class="kpi-card" id="kpi-depletion">
+                        <div class="kpi-label">ICU Depletion</div>
+                        <div class="kpi-value">--</div>
+                        <div class="kpi-unit">hours from now</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- Controls -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">⚙️ Scenario Controls</span>
+                        </div>
+                        <div class="sliders-panel">
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <span>Surge Multiplier</span>
+                                    <span class="slider-value" id="val-surge">1.0x</span>
+                                </div>
+                                <input type="range" id="slider-surge" min="0.5" max="6" step="0.1" value="1.0"
+                                       oninput="updateSlider('surge', this.value)">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <span>Extra Beds</span>
+                                    <span class="slider-value" id="val-beds">0</span>
+                                </div>
+                                <input type="range" id="slider-beds" min="0" max="50" step="5" value="0"
+                                       oninput="updateSlider('beds', this.value)">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <span>Staff Reassignment</span>
+                                    <span class="slider-value" id="val-staff">0</span>
+                                </div>
+                                <input type="range" id="slider-staff" min="0" max="20" step="1" value="0"
+                                       oninput="updateSlider('staff', this.value)">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <span>Duration (hours)</span>
+                                    <span class="slider-value" id="val-duration">72</span>
+                                </div>
+                                <input type="range" id="slider-duration" min="12" max="168" step="12" value="72"
+                                       oninput="updateSlider('duration', this.value)">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label"><span>Triage Mode</span></div>
+                                <select id="select-triage" onchange="updateTriage()">
+                                    <option value="NORMAL">Normal — all patients admitted</option>
+                                    <option value="MODERATE">Moderate — defer 15% non-urgent</option>
+                                    <option value="STRICT">Strict — defer 30% non-urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="run-btn" onclick="runSimulation()">
+                            ▶ Run Simulation
+                        </button>
+                    </div>
+
+                    <!-- Alerts & Recommendations -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">🚨 Alerts & Recommendations</span>
+                        </div>
+                        <div class="alerts-panel" id="alertsPanel">
+                            <div class="alert-item alert-info">
+                                Select a preset or configure parameters, then click <strong>Run Simulation</strong>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ward Tabs -->
+                <div class="ward-tabs" id="wardTabs"></div>
+
+                <!-- Heatmap -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <span class="card-title">🗺️ Ward × Hour Heatmap — Bed Occupancy</span>
+                    </div>
+                    <div class="heatmap-container" id="heatmapContainer">
+                        <div class="loading"><div class="spinner"></div>Run a simulation to see the heatmap</div>
+                    </div>
+                    <div class="heatmap-legend">
+                        <span>0%</span>
+                        <div class="heatmap-legend-bar"></div>
+                        <span>100%</span>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">📈 Occupancy Over Time</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartOccupancy"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">📊 Admissions vs Discharges</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartAdmissions"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compare View -->
+            <div id="view-compare" style="display:none;">
+                <div class="card" style="margin-bottom:24px;">
+                    <div class="card-header">
+                        <span class="card-title">⚖️ Strategy Compare — Select Two Scenarios</span>
+                    </div>
+                    <div class="compare-grid">
+                        <div>
+                            <h3 style="font-size:14px; margin-bottom:12px; color:var(--teal);">Baseline Scenario</h3>
+                            <select id="compare-baseline" style="margin-bottom:12px;">
+                                <option value="flood">🌊 Monsoon Flood</option>
+                                <option value="dengue">🦟 Dengue Outbreak</option>
+                                <option value="pileup">🚗 Highway Pile-up</option>
+                                <option value="normal">📊 Normal</option>
+                            </select>
+                        </div>
+                        <div class="compare-vs">VS</div>
+                        <div>
+                            <h3 style="font-size:14px; margin-bottom:12px; color:var(--blue);">Alternative Strategy</h3>
+                            <select id="compare-alt" style="margin-bottom:12px;">
+                                <option value="flood">🌊 Flood + Triage</option>
+                                <option value="dengue">🦟 Dengue + Extra Beds</option>
+                                <option value="pileup">🚗 Pile-up + Staff</option>
+                                <option value="normal" selected>📊 Normal</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="run-btn" onclick="runCompare()" style="margin-top:20px;">
+                        ⚖️ Compare Strategies
+                    </button>
+                </div>
+                <div id="compareResults"></div>
+            </div>
+
+            <!-- Forecast View -->
+            <div id="view-forecast" style="display:none;">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">🔮 72-Hour Admission Forecast</span>
+                        </div>
+                        <div class="ward-tabs" id="forecastWardTabs"></div>
+                        <div class="chart-container" style="height:320px;">
+                            <canvas id="chartForecast"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">📋 Backtest MAPE Report</span>
+                        </div>
+                        <div id="backtestReport">
+                            <div class="loading">Select a ward to see the backtest report</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip">
+            <div class="tooltip-value" id="tooltip-value"></div>
+            <div id="tooltip-label" style="color:var(--text-muted);margin-top:4px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // STATE
+        // =====================================================
+        const API = 'http://localhost:8080/api/sim';
+        let currentResults = null;
+        let currentWard = 'General';
+        let charts = {};
+        let sseSource = null;
+
+        // =====================================================
+        // SSE CONNECTION
+        // =====================================================
+        function connectSSE() {
+            try {
+                sseSource = new EventSource(API + '/stream');
+                sseSource.addEventListener('connected', (e) => {
+                    document.getElementById('sseDot').classList.remove('disconnected');
+                    document.getElementById('sseLabel').textContent = 'Live';
+                });
+                sseSource.addEventListener('scenario-result', (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        handleScenarioResult(data);
+                    } catch(err) { console.error('SSE parse error', err); }
+                });
+                sseSource.onerror = () => {
+                    document.getElementById('sseDot').classList.add('disconnected');
+                    document.getElementById('sseLabel').textContent = 'Disconnected';
+                    setTimeout(connectSSE, 5000);
+                };
+            } catch(e) {
+                document.getElementById('sseDot').classList.add('disconnected');
+                document.getElementById('sseLabel').textContent = 'Offline';
+            }
+        }
+
+        // =====================================================
+        // PRESETS
+        // =====================================================
+        const PRESETS = {
+            flood: { surgeMultiplier: 3.5, triageMode: 'STRICT', extraBeds: 20, staffReassignment: 8, durationHours: 72, scenarioName: 'Monsoon Flood' },
+            dengue: { surgeMultiplier: 2.5, triageMode: 'MODERATE', extraBeds: 15, staffReassignment: 5, durationHours: 48, scenarioName: 'Dengue Outbreak' },
+            pileup: { surgeMultiplier: 4.0, triageMode: 'STRICT', extraBeds: 10, staffReassignment: 12, durationHours: 24, scenarioName: 'Highway Pile-up' },
+            normal: { surgeMultiplier: 1.0, triageMode: 'NORMAL', extraBeds: 0, staffReassignment: 0, durationHours: 72, scenarioName: 'Normal Operations' }
+        };
+
+        function loadPreset(name) {
+            const p = PRESETS[name];
+            document.getElementById('slider-surge').value = p.surgeMultiplier;
+            document.getElementById('slider-beds').value = p.extraBeds;
+            document.getElementById('slider-staff').value = p.staffReassignment;
+            document.getElementById('slider-duration').value = p.durationHours;
+            document.getElementById('select-triage').value = p.triageMode;
+            updateSlider('surge', p.surgeMultiplier);
+            updateSlider('beds', p.extraBeds);
+            updateSlider('staff', p.staffReassignment);
+            updateSlider('duration', p.durationHours);
+
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('preset-' + name).classList.add('active');
+
+            runSimulation();
+        }
+
+        // =====================================================
+        // SLIDERS
+        // =====================================================
+        function updateSlider(name, val) {
+            const displays = {
+                surge: () => val + 'x',
+                beds: () => val,
+                staff: () => val,
+                duration: () => val + 'h'
+            };
+            document.getElementById('val-' + name).textContent = displays[name]();
+        }
+
+        function updateTriage() {}
+
+        // =====================================================
+        // RUN SIMULATION
+        // =====================================================
+        async function runSimulation() {
+            const params = {
+                surgeMultiplier: parseFloat(document.getElementById('slider-surge').value),
+                triageMode: document.getElementById('select-triage').value,
+                extraBeds: parseInt(document.getElementById('slider-beds').value),
+                staffReassignment: parseInt(document.getElementById('slider-staff').value),
+                durationHours: parseInt(document.getElementById('slider-duration').value),
+                scenarioName: 'Custom Scenario'
+            };
+
+            // Find active preset name
+            const activePreset = document.querySelector('.preset-btn.active');
+            if (activePreset) {
+                const presetName = activePreset.id.replace('preset-', '');
+                params.scenarioName = PRESETS[presetName]?.scenarioName || 'Custom';
+            }
+
+            try {
+                const res = await fetch(API + '/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (!res.ok) throw new Error('API error ' + res.status);
+                const data = await res.json();
+                handleScenarioResult(data);
+            } catch(err) {
+                console.error('Simulation error:', err);
+                // Generate mock data for offline demo
+                handleScenarioResult(generateMockData(params));
+            }
+        }
+
+        // =====================================================
+        // HANDLE RESULTS
+        // =====================================================
+        function handleScenarioResult(data) {
+            currentResults = data;
+            const wards = Object.keys(data);
+
+            // Build ward tabs
+            const wardTabsHtml = wards.map(w =>
+                `<button class="ward-tab ${w === currentWard ? 'active' : ''}" onclick="selectWard('${w}')">${w}</button>`
+            ).join('');
+            document.getElementById('wardTabs').innerHTML = wardTabsHtml;
+
+            updateKPIs(data[currentWard]);
+            updateAlerts(data[currentWard]);
+            updateHeatmap(data);
+            updateCharts(data[currentWard]);
+        }
+
+        function selectWard(ward) {
+            currentWard = ward;
+            if (currentResults) {
+                handleScenarioResult(currentResults);
+            }
+        }
+
+        // =====================================================
+        // KPIs
+        // =====================================================
+        function updateKPIs(wardResult) {
+            if (!wardResult) return;
+            const kpis = wardResult.kpis;
+
+            // Peak Occupancy
+            const occCard = document.getElementById('kpi-occupancy');
+            occCard.querySelector('.kpi-value').textContent = kpis.peakOccupancyPct.toFixed(1) + '%';
+            occCard.className = 'kpi-card ' + (kpis.peakOccupancyPct > 95 ? 'critical' : kpis.peakOccupancyPct > 80 ? 'warning' : 'good');
+
+            // Turned Away
+            const taCard = document.getElementById('kpi-turned-away');
+            taCard.querySelector('.kpi-value').textContent = kpis.patientsTurnedAway;
+            taCard.className = 'kpi-card ' + (kpis.patientsTurnedAway > 20 ? 'critical' : kpis.patientsTurnedAway > 0 ? 'warning' : 'good');
+
+            // Hours Above 90%
+            const h90Card = document.getElementById('kpi-hours90');
+            h90Card.querySelector('.kpi-value').textContent = kpis.hoursAbove90Pct;
+            const pct90 = kpis.hoursAbove90Pct / kpis.totalHours;
+            h90Card.className = 'kpi-card ' + (pct90 > 0.5 ? 'critical' : pct90 > 0.2 ? 'warning' : 'good');
+
+            // Depletion estimate (from hours data)
+            const hours = wardResult.hours;
+            let depletionHour = -1;
+            for (let i = 0; i < hours.length; i++) {
+                if (hours[i].occupiedIcu >= hours[i].totalIcu) {
+                    depletionHour = i;
+                    break;
+                }
+            }
+            const depCard = document.getElementById('kpi-depletion');
+            depCard.querySelector('.kpi-value').textContent = depletionHour >= 0 ? depletionHour + 'h' : '—';
+            depCard.querySelector('.kpi-unit').textContent = depletionHour >= 0 ? 'hours to ICU full' : 'ICU within capacity';
+            depCard.className = 'kpi-card ' + (depletionHour >= 0 && depletionHour < 12 ? 'critical' : depletionHour >= 0 ? 'warning' : 'good');
+        }
+
+        // =====================================================
+        // ALERTS
+        // =====================================================
+        function updateAlerts(wardResult) {
+            if (!wardResult) return;
+            const panel = document.getElementById('alertsPanel');
+            const recs = wardResult.recommendations;
+
+            panel.innerHTML = recs.map(r => {
+                let cls = 'alert-info';
+                if (r.includes('CRITICAL') || r.includes('🚨')) cls = 'alert-critical';
+                else if (r.includes('⚠️') || r.includes('turned away')) cls = 'alert-warning';
+                else if (r.includes('✅')) cls = 'alert-success';
+                return `<div class="alert-item ${cls}">${r}</div>`;
+            }).join('');
+        }
+
+        // =====================================================
+        // HEATMAP
+        // =====================================================
+        function updateHeatmap(data) {
+            const container = document.getElementById('heatmapContainer');
+            const wards = Object.keys(data);
+            const maxHours = Math.max(...wards.map(w => data[w].hours.length));
+
+            // We'll show every 1h as a cell, grouped by ward rows
+            // Limit display to reasonable grid
+            const step = maxHours > 72 ? Math.ceil(maxHours / 72) : 1;
+            const displayHours = Math.ceil(maxHours / step);
+
+            const gridCols = displayHours + 1; // +1 for label
+
+            let html = `<div class="heatmap" style="grid-template-columns: 80px repeat(${displayHours}, 1fr);">`;
+
+            for (const ward of wards) {
+                html += `<div class="heatmap-row-label">${ward}</div>`;
+                const hours = data[ward].hours;
+                for (let i = 0; i < maxHours; i += step) {
+                    const h = hours[Math.min(i, hours.length - 1)];
+                    const occ = h.occupancyPct;
+                    const color = heatmapColor(occ);
+                    const ts = h.timestamp ? h.timestamp.substring(11, 16) : `H${i}`;
+                    html += `<div class="heatmap-cell" style="background:${color};"
+                                  onmouseenter="showTooltip(event, '${ward} — ${ts}', '${occ.toFixed(1)}% occupancy')"
+                                  onmouseleave="hideTooltip()"></div>`;
+                }
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function heatmapColor(pct) {
+            if (pct >= 95) return '#991b1b';
+            if (pct >= 90) return '#ef4444';
+            if (pct >= 80) return '#f97316';
+            if (pct >= 70) return '#eab308';
+            if (pct >= 50) return '#84cc16';
+            return '#22c55e';
+        }
+
+        // =====================================================
+        // CHARTS
+        // =====================================================
+        function updateCharts(wardResult) {
+            if (!wardResult) return;
+            const hours = wardResult.hours;
+
+            // Destroy previous charts
+            if (charts.occupancy) charts.occupancy.destroy();
+            if (charts.admissions) charts.admissions.destroy();
+
+            const labels = hours.map((h, i) => {
+                if (h.timestamp) {
+                    const d = new Date(h.timestamp);
+                    return i % 6 === 0 ? d.toLocaleDateString('en-IN', {month:'short', day:'numeric'}) + ' ' + d.getHours() + ':00' : '';
+                }
+                return i % 6 === 0 ? `H${i}` : '';
+            });
+
+            // Occupancy chart
+            const occCtx = document.getElementById('chartOccupancy').getContext('2d');
+            charts.occupancy = new Chart(occCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Bed Occupancy %',
+                            data: hours.map(h => h.occupancyPct),
+                            borderColor: '#14b8a6',
+                            backgroundColor: 'rgba(20,184,166,0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                        },
+                        {
+                            label: '90% Threshold',
+                            data: hours.map(() => 90),
+                            borderColor: '#ef4444',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            borderWidth: 1,
+                            fill: false,
+                        }
+                    ]
+                },
+                options: chartOptions('Occupancy %')
+            });
+
+            // Admissions chart
+            const admCtx = document.getElementById('chartAdmissions').getContext('2d');
+            charts.admissions = new Chart(admCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Admissions',
+                            data: hours.map(h => h.admissions),
+                            backgroundColor: 'rgba(20,184,166,0.6)',
+                            borderRadius: 2,
+                        },
+                        {
+                            label: 'Discharges',
+                            data: hours.map(h => h.discharges),
+                            backgroundColor: 'rgba(59,130,246,0.5)',
+                            borderRadius: 2,
+                        },
+                        {
+                            label: 'Turned Away',
+                            data: hours.map(h => h.turnedAway),
+                            backgroundColor: 'rgba(239,68,68,0.7)',
+                            borderRadius: 2,
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions('Patients'),
+                    scales: {
+                        ...chartOptions('Patients').scales,
+                        x: {
+                            ...chartOptions('Patients').scales.x,
+                            stacked: true
+                        },
+                        y: {
+                            ...chartOptions('Patients').scales.y,
+                            stacked: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function chartOptions(yLabel) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { color: '#8892a8', font: { family: 'Inter', size: 11 } }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#5a6478', font: { size: 10 }, maxRotation: 0 },
+                        grid: { color: 'rgba(42,54,84,0.5)' }
+                    },
+                    y: {
+                        ticks: { color: '#5a6478', font: { size: 10 } },
+                        grid: { color: 'rgba(42,54,84,0.5)' },
+                        title: { display: true, text: yLabel, color: '#8892a8', font: { size: 11 } }
+                    }
+                }
+            };
+        }
+
+        // =====================================================
+        // COMPARE VIEW
+        // =====================================================
+        async function runCompare() {
+            const baselineName = document.getElementById('compare-baseline').value;
+            const altName = document.getElementById('compare-alt').value;
+
+            const baseline = PRESETS[baselineName];
+            const alt = PRESETS[altName];
+
+            try {
+                const res = await fetch(API + '/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ baseline, alternative: alt })
+                });
+                const data = await res.json();
+                renderCompareResults(data);
+            } catch(err) {
+                // Offline fallback
+                const data = {
+                    baseline: generateMockData(baseline),
+                    alternative: generateMockData(alt),
+                    deltas: {}
+                };
+                // Compute deltas
+                for (const ward of Object.keys(data.baseline)) {
+                    const bk = data.baseline[ward].kpis;
+                    const ak = data.alternative[ward].kpis;
+                    data.deltas[ward] = {
+                        turnedAwayDelta: bk.patientsTurnedAway - ak.patientsTurnedAway,
+                        peakOccupancyDelta: bk.peakOccupancyPct - ak.peakOccupancyPct,
+                        hoursAbove90Delta: bk.hoursAbove90Pct - ak.hoursAbove90Pct
+                    };
+                }
+                renderCompareResults(data);
+            }
+        }
+
+        function renderCompareResults(data) {
+            const container = document.getElementById('compareResults');
+            const wards = Object.keys(data.baseline);
+
+            let html = '<div class="grid-2">';
+            for (const ward of wards) {
+                const bk = data.baseline[ward].kpis;
+                const ak = data.alternative[ward].kpis;
+                const delta = data.deltas[ward] || {};
+
+                html += `<div class="card">
+                    <div class="card-header"><span class="card-title">📊 ${ward} Ward</span></div>
+                    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                        <tr style="border-bottom:1px solid var(--border);">
+                            <th style="text-align:left;padding:8px;color:var(--text-muted);">Metric</th>
+                            <th style="text-align:center;padding:8px;color:var(--teal);">Baseline</th>
+                            <th style="text-align:center;padding:8px;color:var(--blue);">Alternative</th>
+                            <th style="text-align:center;padding:8px;">Delta</th>
+                        </tr>
+                        <tr style="border-bottom:1px solid var(--border);">
+                            <td style="padding:8px;">Peak Occupancy</td>
+                            <td style="text-align:center;padding:8px;">${bk.peakOccupancyPct.toFixed(1)}%</td>
+                            <td style="text-align:center;padding:8px;">${ak.peakOccupancyPct.toFixed(1)}%</td>
+                            <td style="text-align:center;padding:8px;" class="${(delta.peakOccupancyDelta || 0) > 0 ? 'delta-positive' : 'delta-negative'}">
+                                ${(delta.peakOccupancyDelta || 0) > 0 ? '↓' : '↑'} ${Math.abs(delta.peakOccupancyDelta || 0).toFixed(1)}%
+                            </td>
+                        </tr>
+                        <tr style="border-bottom:1px solid var(--border);">
+                            <td style="padding:8px;">Turned Away</td>
+                            <td style="text-align:center;padding:8px;">${bk.patientsTurnedAway}</td>
+                            <td style="text-align:center;padding:8px;">${ak.patientsTurnedAway}</td>
+                            <td style="text-align:center;padding:8px;" class="${(delta.turnedAwayDelta || 0) > 0 ? 'delta-positive' : 'delta-negative'}">
+                                ${(delta.turnedAwayDelta || 0) > 0 ? '↓' : '↑'} ${Math.abs(delta.turnedAwayDelta || 0)}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px;">Hours > 90%</td>
+                            <td style="text-align:center;padding:8px;">${bk.hoursAbove90Pct}</td>
+                            <td style="text-align:center;padding:8px;">${ak.hoursAbove90Pct}</td>
+                            <td style="text-align:center;padding:8px;" class="${(delta.hoursAbove90Delta || 0) > 0 ? 'delta-positive' : 'delta-negative'}">
+                                ${(delta.hoursAbove90Delta || 0) > 0 ? '↓' : '↑'} ${Math.abs(delta.hoursAbove90Delta || 0)}
+                            </td>
+                        </tr>
+                    </table>
+                </div>`;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // =====================================================
+        // FORECAST VIEW
+        // =====================================================
+        async function loadForecast(ward) {
+            currentWard = ward;
+            const tabs = document.getElementById('forecastWardTabs');
+
+            try {
+                const [forecastRes, backtestRes] = await Promise.all([
+                    fetch(API + '/forecast/' + ward),
+                    fetch(API + '/backtest/' + ward)
+                ]);
+
+                if (forecastRes.ok) {
+                    const forecast = await forecastRes.json();
+                    renderForecastChart(forecast);
+                }
+                if (backtestRes.ok) {
+                    const backtest = await backtestRes.json();
+                    renderBacktestReport(backtest);
+                }
+            } catch(err) {
+                console.error('Forecast error', err);
+                renderMockForecast();
+            }
+        }
+
+        function renderForecastChart(forecast) {
+            if (charts.forecast) charts.forecast.destroy();
+
+            const labels = Array.from({length: forecast.forecasts.length}, (_, i) => `+${i+1}h`);
+            const ctx = document.getElementById('chartForecast').getContext('2d');
+
+            charts.forecast = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Forecast',
+                            data: forecast.forecasts,
+                            borderColor: '#14b8a6',
+                            backgroundColor: 'rgba(20,184,166,0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                        },
+                        {
+                            label: 'Upper Band (95%)',
+                            data: forecast.upperBand,
+                            borderColor: 'rgba(239,68,68,0.4)',
+                            backgroundColor: 'rgba(239,68,68,0.05)',
+                            fill: '+1',
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderWidth: 1,
+                            borderDash: [3, 3],
+                        },
+                        {
+                            label: 'Lower Band (95%)',
+                            data: forecast.lowerBand,
+                            borderColor: 'rgba(34,197,94,0.4)',
+                            backgroundColor: 'rgba(34,197,94,0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderWidth: 1,
+                            borderDash: [3, 3],
+                        }
+                    ]
+                },
+                options: chartOptions('Predicted Admissions')
+            });
+        }
+
+        function renderBacktestReport(report) {
+            const container = document.getElementById('backtestReport');
+            const mapeColor = report.mape < 30 ? 'var(--green)' : report.mape < 60 ? 'var(--orange)' : 'var(--red)';
+
+            container.innerHTML = `
+                <div style="padding:20px; text-align:center;">
+                    <div style="font-size:48px; font-weight:800; color:${mapeColor}; margin-bottom:8px;">
+                        ${report.mape.toFixed(1)}%
+                    </div>
+                    <div style="font-size:14px; color:var(--text-secondary); margin-bottom:24px;">
+                        Mean Absolute Percentage Error
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; text-align:left;">
+                        <div style="background:var(--bg-secondary); padding:16px; border-radius:var(--radius-sm);">
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Training Points</div>
+                            <div style="font-size:24px; font-weight:700; color:var(--teal);">${report.trainSize.toLocaleString()}</div>
+                        </div>
+                        <div style="background:var(--bg-secondary); padding:16px; border-radius:var(--radius-sm);">
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Test Points</div>
+                            <div style="font-size:24px; font-weight:700; color:var(--blue);">${report.testSize.toLocaleString()}</div>
+                        </div>
+                        <div style="background:var(--bg-secondary); padding:16px; border-radius:var(--radius-sm); grid-column:1/-1;">
+                            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">RMSE</div>
+                            <div style="font-size:24px; font-weight:700; color:var(--purple);">${report.rmse.toFixed(3)}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:16px; font-size:11px; color:var(--text-muted);">
+                        80/20 train-test split • Holt-Winters with hour-of-week seasonality (168 periods)
+                    </div>
+                </div>
+            `;
+        }
+
+        // =====================================================
+        // MOCK DATA (offline fallback)
+        // =====================================================
+        function generateMockData(params) {
+            const wards = ['General', 'Pediatric', 'Maternity', 'Emergency'];
+            const result = {};
+            for (const ward of wards) {
+                const hours = [];
+                let occupied = 25;
+                const totalBeds = ward === 'General' ? 60 : ward === 'Emergency' ? 20 : 30;
+                const totalIcu = ward === 'Emergency' ? 10 : ward === 'General' ? 8 : 4;
+
+                for (let h = 0; h < params.durationHours; h++) {
+                    const admissions = Math.floor(Math.random() * 8 * params.surgeMultiplier);
+                    const discharges = Math.floor(Math.random() * 5);
+                    occupied = Math.max(0, Math.min(totalBeds + params.extraBeds, occupied + admissions - discharges));
+                    const occPct = occupied / (totalBeds + params.extraBeds) * 100;
+
+                    hours.push({
+                        timestamp: new Date(2026, 6, 1, h).toISOString(),
+                        wardName: ward,
+                        admissions,
+                        discharges,
+                        totalBeds: totalBeds + params.extraBeds,
+                        occupiedBeds: occupied,
+                        totalIcu,
+                        occupiedIcu: Math.min(totalIcu, Math.floor(occupied * 0.15)),
+                        totalVentilators: 4,
+                        usedVentilators: Math.floor(Math.random() * 3),
+                        staffOnDuty: 10 + params.staffReassignment,
+                        oxygenLevelPct: 70 + Math.random() * 30,
+                        occupancyPct: occPct,
+                        turnedAway: Math.max(0, occupied - (totalBeds + params.extraBeds))
+                    });
+                }
+
+                const peakOcc = Math.max(...hours.map(h => h.occupancyPct));
+                const turnedAway = hours.reduce((s, h) => s + h.turnedAway, 0);
+                const above90 = hours.filter(h => h.occupancyPct > 90).length;
+
+                result[ward] = {
+                    params,
+                    hours,
+                    kpis: {
+                        patientsTurnedAway: turnedAway,
+                        peakOccupancyPct: peakOcc,
+                        hoursAbove90Pct: above90,
+                        totalHours: params.durationHours
+                    },
+                    recommendations: [
+                        peakOcc > 95 ? '🚨 CRITICAL: Peak occupancy exceeds 95%. Activate emergency overflow protocols immediately.' : null,
+                        above90 > params.durationHours * 0.3 ? '⚠️ Sustained high load for over 30% of the period.' : null,
+                        turnedAway > 0 ? `🏥 ${turnedAway} patients turned away. Consider adding extra beds.` : null,
+                        '✅ Scenario within normal operating parameters.' ,
+                        'ℹ️ Statistical forecast, not clinical advice.'
+                    ].filter(Boolean)
+                };
+            }
+            return result;
+        }
+
+        function renderMockForecast() {
+            const forecast = {
+                forecasts: Array.from({length: 72}, () => 3 + Math.random() * 4),
+                upperBand: Array.from({length: 72}, () => 6 + Math.random() * 5),
+                lowerBand: Array.from({length: 72}, () => Math.max(0, 1 + Math.random() * 2)),
+                rmse: 1.5
+            };
+            renderForecastChart(forecast);
+
+            renderBacktestReport({
+                trainSize: 1728,
+                testSize: 432,
+                mape: 45.2,
+                rmse: 1.83
+            });
+        }
+
+        // =====================================================
+        // TOOLTIP
+        // =====================================================
+        function showTooltip(e, label, value) {
+            const tt = document.getElementById('tooltip');
+            document.getElementById('tooltip-value').textContent = value;
+            document.getElementById('tooltip-label').textContent = label;
+            tt.classList.add('visible');
+            tt.style.left = (e.clientX + 12) + 'px';
+            tt.style.top = (e.clientY - 40) + 'px';
+        }
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('visible');
+        }
+
+        // =====================================================
+        // VIEW SWITCHING
+        // =====================================================
+        function switchView(view) {
+            ['dashboard', 'compare', 'forecast'].forEach(v => {
+                document.getElementById('view-' + v).style.display = v === view ? 'block' : 'none';
+                document.getElementById('tab-' + v).classList.toggle('active', v === view);
+            });
+
+            if (view === 'forecast') {
+                // Load ward tabs for forecast
+                const wards = currentResults ? Object.keys(currentResults) : ['General', 'Pediatric', 'Maternity', 'Emergency'];
+                document.getElementById('forecastWardTabs').innerHTML = wards.map(w =>
+                    `<button class="ward-tab ${w === currentWard ? 'active' : ''}" onclick="loadForecast('${w}')">${w}</button>`
+                ).join('');
+                loadForecast(currentWard);
+            }
+        }
+
+        // =====================================================
+        // INIT
+        // =====================================================
+        connectSSE();
+
+        // Auto-load flood preset on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => loadPreset('flood'), 500);
+        });
+    </script>
+</body>
+</html>

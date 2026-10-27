@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/sms-inbox/**").permitAll()
+                .requestMatchers("/api/sim/**").permitAll()
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
                 // All other API endpoints require authentication
