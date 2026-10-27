@@ -48,6 +48,10 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/sms-inbox/**").permitAll()
                 .requestMatchers("/api/sim/**").permitAll()
+                .requestMatchers("/api/doctors/**").permitAll()
+                .requestMatchers("/api/appointments/**").permitAll()
+                .requestMatchers("/api/queue/**").permitAll()
+                .requestMatchers("/api/scheduler/**").permitAll()
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
                 // All other API endpoints require authentication

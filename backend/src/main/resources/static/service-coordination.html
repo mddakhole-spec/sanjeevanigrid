@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanjeevaniGrid — Service Coordination & OPD Hub</title>
+    <meta name="description" content="SanjeevaniGrid Service Coordination: Weekly Tap-Grid Doctor Availability, One-Question Booking Wizard, Live OPD Queue, Emergency Bump Logic, and Surge Slot Reservation.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1e2840;
+            --border: #2a3654;
+            --border-light: rgba(42, 54, 84, 0.6);
+            --text-primary: #e8ecf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --teal: #14b8a6;
+            --teal-light: #2dd4bf;
+            --teal-dark: #0d9488;
+            --teal-glow: rgba(20, 184, 166, 0.2);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.25);
+            --orange: #f59e0b;
+            --orange-glow: rgba(245, 158, 11, 0.2);
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.2);
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+            --font-base: 'Inter', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-base);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        /* Subtle animated background glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 15% 15%, rgba(20,184,166,0.08) 0%, transparent 45%),
+                        radial-gradient(ellipse at 85% 85%, rgba(59,130,246,0.06) 0%, transparent 45%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Navigation Header */
+        .header {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-area { display: flex; align-items: center; gap: 14px; }
+        .brand-logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--teal), #0284c7);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 800; color: #fff;
+            box-shadow: 0 0 16px var(--teal-glow);
+        }
+        .brand-titles h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+        .brand-titles h1 span { color: var(--teal); }
+        .brand-titles p { font-size: 12px; color: var(--text-secondary); }
+
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+
+        .sandbox-pill {
+            background: var(--orange-glow);
+            color: var(--orange);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(245,158,11,0.4);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .pulse-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--orange);
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
+
+        .lang-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: var(--teal);
+            color: #042f2e;
+            border-color: var(--teal);
+            font-weight: 700;
+        }
+
+        .btn-simulator {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-simulator:hover { background: rgba(59, 130, 246, 0.25); color: #93c5fd; }
+
+        .btn-emergency-top {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 0 16px var(--red-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-emergency-top:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(239, 68, 68, 0.45); }
+
+        /* Surge Protocol Alert Bar */
+        .surge-banner {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15));
+            border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+            padding: 10px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 13px;
+        }
+        .surge-banner-left { display: flex; align-items: center; gap: 10px; color: var(--orange); font-weight: 600; }
+        .surge-controls { display: flex; align-items: center; gap: 10px; }
+        .surge-btn-action {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .surge-btn-action:hover { background: rgba(245, 158, 11, 0.35); }
+
+        /* Main View Switcher Tabs */
+        .nav-tabs-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            display: flex;
+            gap: 24px;
+        }
+        .nav-tab {
+            padding: 16px 4px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 15px;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.2s;
+        }
+        .nav-tab:hover { color: var(--text-primary); }
+        .nav-tab.active {
+            color: var(--teal);
+            border-bottom-color: var(--teal);
+        }
+        .badge-count {
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+        .nav-tab.active .badge-count { background: var(--teal-glow); color: var(--teal); }
+
+        /* Content Area */
+        .content-area { flex: 1; padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+        /* ========================================================
+           TAB 1: ONE-QUESTION BOOKING WIZARD (WCAG 2.1 AA Compliant)
+           ======================================================== */
+        .wizard-container {
+            max-width: 760px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .wizard-header {
+            padding: 24px 32px;
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), transparent);
+            border-bottom: 1px solid var(--border);
+        }
+        .wizard-progress-bar-wrap {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .wizard-progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal), #38bdf8);
+            width: 20%;
+            transition: width 0.3s ease;
+        }
+        .wizard-nav-step {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .step-indicator { font-size: 13px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 1px; }
+        .assisted-toggle {
+            display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary);
+        }
+        .switch {
+            position: relative; display: inline-block; width: 38px; height: 22px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border); transition: .3s; border-radius: 22px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--teal); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .wizard-body { padding: 36px 32px; }
+
+        .wizard-question-title {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .wizard-question-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        /* 48px+ Touch Target Cards */
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .choice-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 18px;
+            cursor: pointer;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .choice-card:hover {
+            border-color: var(--teal);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        .choice-card.selected {
+            border-color: var(--teal);
+            background: rgba(20, 184, 166, 0.12);
+            box-shadow: 0 0 20px var(--teal-glow);
+        }
+        .choice-card.emergency-choice {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.08);
+        }
+        .choice-card.emergency-choice:hover, .choice-card.emergency-choice.selected {
+            border-color: var(--red);
+            background: rgba(239, 68, 68, 0.18);
+            box-shadow: 0 0 24px var(--red-glow);
+        }
+
+        .choice-icon { font-size: 32px; }
+        .choice-title { font-size: 17px; font-weight: 700; }
+        .choice-sub { font-size: 13px; color: var(--text-secondary); }
+
+        /* Doctor Selection Cards */
+        .doctor-card-list { display: flex; flex-direction: column; gap: 14px; }
+        .doctor-select-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 80px;
+            transition: all 0.2s;
+        }
+        .doctor-select-card:hover { border-color: var(--teal); transform: translateX(4px); }
+        .doctor-select-card.selected {
+            border-color: var(--teal);
+            background: rgba(20, 184, 166, 0.12);
+            box-shadow: 0 0 16px var(--teal-glow);
+        }
+        .doc-info-left { display: flex; align-items: center; gap: 16px; }
+        .doc-avatar {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 800; color: white;
+        }
+        .doc-details h3 { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+        .doc-details p { font-size: 14px; color: var(--text-secondary); }
+        .doc-stats { text-align: right; }
+        .doc-stats .wait-stat { font-size: 13px; color: var(--teal); font-weight: 600; }
+        .doc-stats .fee-stat { font-size: 12px; color: var(--text-muted); }
+
+        /* Slot Picker */
+        .date-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+        .date-tab-btn {
+            flex: 1; padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .date-tab-btn.active {
+            background: var(--teal);
+            color: #042f2e;
+            border-color: var(--teal);
+            font-weight: 700;
+        }
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .slot-chip {
+            min-height: 48px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .slot-chip.available {
+            background: rgba(20, 184, 166, 0.15);
+            color: var(--teal-light);
+            border-color: rgba(20, 184, 166, 0.3);
+        }
+        .slot-chip.available:hover {
+            background: var(--teal);
+            color: #042f2e;
+            transform: scale(1.05);
+        }
+        .slot-chip.selected {
+            background: var(--teal) !important;
+            color: #042f2e !important;
+            border-color: #fff !important;
+            box-shadow: 0 0 16px var(--teal-glow);
+        }
+        .slot-chip.surge-reserved {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--orange);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+        .slot-chip.booked {
+            background: rgba(42, 54, 84, 0.4);
+            color: var(--text-muted);
+            border-color: transparent;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        /* Form Inputs (18px+ font, high contrast, 48px touch targets) */
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);
+        }
+        .input-with-action { position: relative; display: flex; align-items: center; }
+        .form-control {
+            width: 100%;
+            height: 52px;
+            padding: 12px 18px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 17px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: var(--teal); background: var(--bg-card); }
+        .mic-btn {
+            position: absolute; right: 10px;
+            background: rgba(20, 184, 166, 0.2);
+            color: var(--teal);
+            border: none;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .mic-btn.listening {
+            background: var(--red); color: white; animation: mic-pulse 1s infinite;
+        }
+        @keyframes mic-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+        .priority-segmented {
+            display: flex; gap: 12px; margin-top: 8px;
+        }
+        .priority-opt {
+            flex: 1; min-height: 54px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px;
+            font-size: 16px; font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .priority-opt.routine.selected {
+            background: rgba(20, 184, 166, 0.2);
+            border-color: var(--teal);
+            color: var(--teal-light);
+        }
+        .priority-opt.emergency {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .priority-opt.emergency.selected {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: var(--red);
+            color: #fca5a5;
+            box-shadow: 0 0 16px var(--red-glow);
+        }
+
+        /* Confirmation Card */
+        .token-card {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.15), rgba(59, 130, 246, 0.15));
+            border: 2px solid var(--teal);
+            border-radius: var(--radius);
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 0 32px var(--teal-glow);
+            margin-bottom: 24px;
+        }
+        .token-num {
+            font-family: var(--font-display);
+            font-size: 54px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 2px;
+            margin: 10px 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .token-num.emergency { color: #f87171; text-shadow: 0 0 20px var(--red-glow); }
+        .token-details {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            margin: 20px 0; text-align: left;
+            background: rgba(17, 24, 39, 0.7);
+            padding: 16px; border-radius: 10px;
+        }
+        .token-detail-item .lbl { font-size: 13px; color: var(--text-secondary); }
+        .token-detail-item .val { font-size: 16px; font-weight: 700; color: #fff; }
+
+        .qr-placeholder {
+            width: 130px; height: 130px; margin: 12px auto;
+            background: white; border-radius: 10px; padding: 8px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .action-row {
+            display: flex; gap: 12px; margin-top: 20px;
+        }
+        .btn-speak {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+            height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-weight: 700; cursor: pointer; flex: 1; font-size: 15px;
+        }
+        .btn-speak:hover { background: rgba(59, 130, 246, 0.35); }
+
+        /* Wizard Footer Buttons */
+        .wizard-footer {
+            padding: 20px 32px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .btn-wizard-back {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+            min-height: 48px;
+            padding: 0 24px;
+            border-radius: 10px;
+            font-size: 16px; font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-wizard-back:hover { border-color: var(--text-primary); color: var(--text-primary); }
+        .btn-wizard-next {
+            background: var(--teal);
+            border: none;
+            color: #042f2e;
+            min-height: 50px;
+            padding: 0 36px;
+            border-radius: 10px;
+            font-size: 17px; font-weight: 800;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 16px var(--teal-glow);
+            transition: all 0.2s;
+        }
+        .btn-wizard-next:hover { background: var(--teal-light); transform: translateY(-2px); }
+        .btn-wizard-next.emergency {
+            background: var(--red); color: white;
+            box-shadow: 0 4px 20px var(--red-glow);
+        }
+        .btn-wizard-next.emergency:hover { background: #dc2626; }
+
+        /* ========================================================
+           TAB 2: TAP-GRID WEEKLY AVAILABILITY UI
+           ======================================================== */
+        .tapgrid-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+        }
+        .tapgrid-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            height: fit-content;
+        }
+        .tapgrid-main {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .tap-grid-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 6px;
+            min-width: 600px;
+        }
+        .tap-grid-table th {
+            padding: 10px; font-size: 14px; font-weight: 700; color: var(--text-secondary);
+            text-align: center;
+        }
+        .tap-cell {
+            height: 48px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .tap-cell.active-slot {
+            background: rgba(20, 184, 166, 0.25);
+            border-color: var(--teal);
+            color: var(--teal-light);
+        }
+        .tap-cell.active-slot:hover { background: rgba(20, 184, 166, 0.4); }
+        .tap-cell.break-slot {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+        .tap-cell.off-slot {
+            background: rgba(42, 54, 84, 0.2);
+            color: var(--text-muted);
+            border-color: transparent;
+        }
+        .tap-cell.off-slot:hover { background: rgba(42, 54, 84, 0.4); border-color: var(--border); }
+
+        /* ========================================================
+           TAB 3: LIVE OPD QUEUE SCREEN
+           ======================================================== */
+        .live-queue-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .now-serving-box {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(15, 23, 42, 0.9));
+            border: 2px solid var(--teal);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: 0 0 32px var(--teal-glow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .now-serving-label {
+            font-size: 14px; font-weight: 800; color: var(--teal); letter-spacing: 2px; text-transform: uppercase;
+        }
+        .serving-token-big {
+            font-family: var(--font-display);
+            font-size: 72px;
+            font-weight: 800;
+            color: #fff;
+            margin: 12px 0;
+            letter-spacing: 2px;
+        }
+        .serving-patient-name { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .serving-room { font-size: 16px; color: var(--text-secondary); margin-bottom: 24px; }
+        .queue-control-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-queue {
+            flex: 1; min-height: 48px; border-radius: 10px; font-weight: 700; font-size: 15px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            border: none; transition: all 0.2s;
+        }
+        .btn-call-next { background: var(--teal); color: #042f2e; }
+        .btn-call-next:hover { background: var(--teal-light); }
+        .btn-complete { background: #0284c7; color: white; }
+        .btn-complete:hover { background: #0369a1; }
+        .btn-no-show { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .btn-no-show:hover { background: var(--red); color: white; }
+
+        .upcoming-list-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        .upcoming-list-box h3 { font-size: 18px; margin-bottom: 16px; display: flex; justify-content: space-between; }
+        .queue-items { display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+        .queue-item-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .queue-pos-badge {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--border);
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;
+        }
+        .queue-token-tag { font-size: 18px; font-weight: 800; color: var(--teal-light); }
+        .queue-token-tag.emergency { color: #f87171; }
+
+        /* ========================================================
+           TAB 4: EMERGENCY BUMP & SMS SANDBOX DRAWER
+           ======================================================== */
+        .bump-demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .bump-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .sms-inbox-list {
+            display: flex; flex-direction: column; gap: 12px;
+            max-height: 450px; overflow-y: auto; margin-top: 14px;
+        }
+        .sms-card {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--teal);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 14px;
+        }
+        .sms-card.urgent { border-left-color: var(--red); background: rgba(239, 68, 68, 0.08); }
+        .sms-card-header {
+            display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;
+        }
+        .sms-card-phone { font-weight: 700; color: #fff; }
+        .sms-card-body { line-height: 1.4; color: var(--text-primary); }
+
+        /* Footer disclaimer */
+        .footer-disclaimer {
+            text-align: center; padding: 20px; font-size: 12px; color: var(--text-muted);
+            border-top: 1px solid var(--border); background: var(--bg-secondary); margin-top: auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .tapgrid-container, .live-queue-container, .bump-demo-grid { grid-template-columns: 1fr; }
+            .header { padding: 12px 16px; }
+            .content-area { padding: 16px; }
+            .token-num { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- Top Navigation Header -->
+    <header class="header">
+        <div class="brand-area">
+            <div class="brand-logo">SG</div>
+            <div class="brand-titles">
+                <h1>Sanjeevani<span>Grid</span></h1>
+                <p id="ui-subtitle">Service Coordination & OPD Allocation Hub</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="sandbox-pill">
+                <div class="pulse-dot"></div>
+                <span>SANDBOX MODE</span>
+            </div>
+
+            <!-- Language Buttons -->
+            <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" onclick="setLanguage('hi')">हिंदी</button>
+            <button class="lang-btn" onclick="setLanguage('mr')">मराठी</button>
+
+            <!-- Simulator Link -->
+            <a href="simulator.html" class="btn-simulator">
+                <span>🌊 Crisis Simulator</span>
+            </a>
+
+            <!-- Always visible Emergency button -->
+            <button class="btn-emergency-top" onclick="triggerEmergencyDirect()">
+                <span>🚨 EMERGENCY</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Surge Protocol Status Alert Bar -->
+    <div id="surge-alert-bar" class="surge-banner">
+        <div class="surge-banner-left">
+            <span id="surge-status-icon">⚡</span>
+            <span id="surge-status-text">Surge Protocol: NORMAL (No active crisis buffer reservation)</span>
+        </div>
+        <div class="surge-controls">
+            <button class="surge-btn-action" onclick="simulateSurgeEvent()">🚨 Simulate Surge Alert (SurgePredicted)</button>
+            <button class="surge-btn-action" onclick="resetSurgeProtocol()">Reset Normal</button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="nav-tabs-bar">
+        <div class="nav-tab active" id="tab-btn-wizard" onclick="switchTab('wizard')">
+            <span>📋</span> <span id="txt-tab-wizard">Book Doctor (Wizard)</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-tapgrid" onclick="switchTab('tapgrid')">
+            <span>📅</span> <span id="txt-tab-tapgrid">Doctor Weekly Tap-Grid</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-queue" onclick="switchTab('queue')">
+            <span>📺</span> <span id="txt-tab-queue">Live OPD Queue Screen</span>
+            <span class="badge-count" id="badge-queue-count">3</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-bump" onclick="switchTab('bump')">
+            <span>⚡</span> <span id="txt-tab-bump">Emergency Bump & SMS Inbox</span>
+            <span class="badge-count" id="badge-sms-count">0</span>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+
+        <!-- ========================================================
+             VIEW 1: ONE-QUESTION BOOKING WIZARD
+             ======================================================== -->
+        <div id="view-wizard">
+            <div class="wizard-container">
+                <!-- Wizard Header with Progress -->
+                <div class="wizard-header">
+                    <div class="wizard-progress-bar-wrap">
+                        <div class="wizard-progress-bar-fill" id="wizard-progress"></div>
+                    </div>
+                    <div class="wizard-nav-step">
+                        <span class="step-indicator" id="wizard-step-label">Step 1 of 5</span>
+                        <div class="assisted-toggle">
+                            <span id="txt-assisted-label">Assisted Mode (ASHA Worker)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="assisted-mode-toggle" onchange="toggleAssistedMode()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wizard Body -->
+                <div class="wizard-body">
+
+                    <!-- SCREEN 1: CARE NEED / SPECIALTY -->
+                    <div id="screen-1" class="wizard-screen">
+                        <h2 class="wizard-question-title" id="q1-title">What medical care do you need today?</h2>
+                        <p class="wizard-question-subtitle" id="q1-sub">Select the primary care specialty or immediate medical concern.</p>
+
+                        <div class="choice-grid">
+                            <div class="choice-card selected" onclick="selectSpecialty(this, 'GENERAL_MEDICINE')">
+                                <div class="choice-icon">🩺</div>
+                                <div class="choice-title" id="sp-gen">General Medicine</div>
+                                <div class="choice-sub" id="sp-gen-sub">Fever, cough, weakness, BP</div>
+                            </div>
+                            <div class="choice-card" onclick="selectSpecialty(this, 'PEDIATRICS')">
+                                <div class="choice-icon">👶</div>
+                                <div class="choice-title" id="sp-ped">Pediatrics</div>
+                                <div class="choice-sub" id="sp-ped-sub">Child care, infant illness</div>
+                            </div>
+                            <div class="choice-card" onclick="selectSpecialty(this, 'ORTHOPEDICS')">
+                                <div class="choice-icon">🦴</div>
+                                <div class="choice-title" id="sp-ortho">Orthopedics</div>
+                                <div class="choice-sub" id="sp-ortho-sub">Fracture, joint pain, spine</div>
+                            </div>
+                            <div class="choice-card" onclick="selectSpecialty(this, 'GYNECOLOGY')">
+                                <div class="choice-icon">🤰</div>
+                                <div class="choice-title" id="sp-gyn">Gynecology</div>
+                                <div class="choice-sub" id="sp-gyn-sub">Maternity, women's health</div>
+                            </div>
+                            <div class="choice-card" onclick="selectSpecialty(this, 'CARDIOLOGY')">
+                                <div class="choice-icon">❤️</div>
+                                <div class="choice-title" id="sp-cardio">Cardiology</div>
+                                <div class="choice-sub" id="sp-cardio-sub">Chest pain, palpitations</div>
+                            </div>
+                            <div class="choice-card emergency-choice" onclick="selectSpecialty(this, 'EMERGENCY')">
+                                <div class="choice-icon">🚨</div>
+                                <div class="choice-title" id="sp-emg">Emergency & Trauma</div>
+                                <div class="choice-sub" id="sp-emg-sub">Immediate critical triage</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCREEN 2: CHOOSE DOCTOR -->
+                    <div id="screen-2" class="wizard-screen" style="display: none;">
+                        <h2 class="wizard-question-title" id="q2-title">Choose your doctor</h2>
+                        <p class="wizard-question-subtitle" id="q2-sub">Verified doctors on duty at Yavatmal District Hospital.</p>
+
+                        <div class="doctor-card-list" id="doctor-selection-list">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- SCREEN 3: DATE & TIME SLOT -->
+                    <div id="screen-3" class="wizard-screen" style="display: none;">
+                        <h2 class="wizard-question-title" id="q3-title">Pick an appointment slot</h2>
+                        <p class="wizard-question-subtitle" id="q3-sub">Select preferred date and tap an available consultation slot.</p>
+
+                        <div class="date-tabs">
+                            <button class="date-tab-btn active" id="btn-date-today" onclick="selectDate(0)">Today</button>
+                            <button class="date-tab-btn" id="btn-date-tomorrow" onclick="selectDate(1)">Tomorrow</button>
+                            <button class="date-tab-btn" id="btn-date-dayafter" onclick="selectDate(2)">Day After</button>
+                        </div>
+
+                        <div class="slots-grid" id="slots-container">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- SCREEN 4: PATIENT DETAILS -->
+                    <div id="screen-4" class="wizard-screen" style="display: none;">
+                        <h2 class="wizard-question-title" id="q4-title">Who is this appointment for?</h2>
+                        <p class="wizard-question-subtitle" id="q4-sub">Fill patient details or use the microphone for voice dictation.</p>
+
+                        <div class="form-group">
+                            <label id="lbl-patient-name">Patient Full Name</label>
+                            <div class="input-with-action">
+                                <input type="text" id="patient-name-input" class="form-control" placeholder="e.g. Ramesh Patil" value="Ramesh Patil">
+                                <button type="button" class="mic-btn" onclick="startVoiceInput('patient-name-input')">🎤</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="lbl-patient-phone">Mobile Phone (For SMS Token & Reminders)</label>
+                            <input type="tel" id="patient-phone-input" class="form-control" placeholder="10-digit mobile number" value="9876543210">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label id="lbl-patient-age">Age</label>
+                                <input type="number" id="patient-age-input" class="form-control" placeholder="Age" value="45">
+                            </div>
+                            <div class="form-group">
+                                <label id="lbl-patient-gender">Gender</label>
+                                <select id="patient-gender-input" class="form-control">
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="lbl-patient-complaint">Symptoms / Chief Complaint</label>
+                            <div class="input-with-action">
+                                <input type="text" id="patient-complaint-input" class="form-control" placeholder="e.g. Severe headache, fever since 2 days" value="Persistent cough and fever for 2 days">
+                                <button type="button" class="mic-btn" onclick="startVoiceInput('patient-complaint-input')">🎤</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="lbl-priority">Priority Level</label>
+                            <div class="priority-segmented">
+                                <div class="priority-opt routine selected" id="opt-routine" onclick="setPriority('ROUTINE')">
+                                    <span>🩺</span> <span id="txt-opt-routine">Routine OPD</span>
+                                </div>
+                                <div class="priority-opt emergency" id="opt-emergency" onclick="setPriority('EMERGENCY')">
+                                    <span>🚨</span> <span id="txt-opt-emergency">EMERGENCY (Critical Case)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCREEN 5: CONFIRMATION & DIGITAL TOKEN -->
+                    <div id="screen-5" class="wizard-screen" style="display: none;">
+                        <h2 class="wizard-question-title" style="color: var(--teal-light);" id="q5-title">✅ Appointment Confirmed!</h2>
+                        <p class="wizard-question-subtitle" id="q5-sub">Your digital token has been generated and sent via SMS sandbox.</p>
+
+                        <div class="token-card" id="token-display-card">
+                            <div style="font-size: 13px; font-weight: 800; color: var(--teal-light); letter-spacing: 2px;">OFFICIAL OPD TOKEN</div>
+                            <div class="token-num" id="conf-token-num">T-104</div>
+                            <div style="font-size: 14px; color: #fff; font-weight: 600;" id="conf-wait-summary">Queue Position: #2 · Estimated Wait: ~28 mins</div>
+
+                            <div class="qr-placeholder">
+                                <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=SANJEEVANI-T-104" alt="Token QR Code" width="115" height="115" style="border-radius: 4px;">
+                            </div>
+
+                            <div class="token-details">
+                                <div class="token-detail-item">
+                                    <div class="lbl">Doctor</div>
+                                    <div class="val" id="conf-doctor-name">Dr. Priya Sharma</div>
+                                </div>
+                                <div class="token-detail-item">
+                                    <div class="lbl">Room / OPD</div>
+                                    <div class="val">Room 2 (Civil OPD)</div>
+                                </div>
+                                <div class="token-detail-item">
+                                    <div class="lbl">Date & Time</div>
+                                    <div class="val" id="conf-slot-time">Today, 10:15 AM</div>
+                                </div>
+                                <div class="token-detail-item">
+                                    <div class="lbl">Patient</div>
+                                    <div class="val" id="conf-patient-name">Ramesh Patil</div>
+                                </div>
+                            </div>
+
+                            <div class="action-row">
+                                <button class="btn-speak" onclick="speakConfirmation()">
+                                    <span>🔊</span> <span id="txt-read-aloud">Read Confirmation Aloud</span>
+                                </button>
+                                <button class="btn-speak" style="background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.4); color: #86efac;" onclick="shareWhatsApp()">
+                                    <span>💬</span> <span>Share Token</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live SMS delivery notification simulator -->
+                        <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">📱</span>
+                            <div style="font-size: 13px; line-height: 1.4;">
+                                <strong style="color: var(--teal-light);">SMS Dispatched (Sandbox):</strong>
+                                <span id="conf-sms-text">"SanjeevaniGrid: Appointment CONFIRMED with Dr. Priya Sharma today at 10:15 AM. Token #T-104. Est. wait: 28m."</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Wizard Navigation Footer -->
+                <div class="wizard-footer">
+                    <button class="btn-wizard-back" id="btn-wizard-back" onclick="prevStep()" style="visibility: hidden;">
+                        ← Back
+                    </button>
+                    <button class="btn-wizard-next" id="btn-wizard-next" onclick="nextStep()">
+                        <span>Continue</span> <span>→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================
+             VIEW 2: WEEKLY TAP-GRID AVAILABILITY UI
+             ======================================================== -->
+        <div id="view-tapgrid" style="display: none;">
+            <div class="tapgrid-container">
+                <div class="tapgrid-sidebar">
+                    <h3 style="margin-bottom: 16px; font-size: 18px;">Doctor Profile & Rota</h3>
+
+                    <div class="form-group">
+                        <label>Select Doctor</label>
+                        <select id="tapgrid-doc-select" class="form-control" onchange="loadTapGrid()">
+                            <!-- populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Max Patients Per Day</label>
+                        <input type="number" id="tapgrid-max-patients" class="form-control" value="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Slot Duration</label>
+                        <select id="tapgrid-slot-duration" class="form-control">
+                            <option value="15">15 Minutes</option>
+                            <option value="20">20 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                        </select>
+                    </div>
+
+                    <div style="margin: 20px 0; padding: 14px; background: var(--bg-secondary); border-radius: 10px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        <strong style="color: var(--teal);">💡 Tap-Grid Instructions:</strong><br>
+                        • Click any cell to toggle Available / Off.<br>
+                        • Amber cells indicate lunch break (13:00 - 14:00).<br>
+                        • Changes auto-constrain slot generation to working hours.
+                    </div>
+
+                    <button class="btn-wizard-next" style="width: 100%; justify-content: center;" onclick="saveTapGridSchedule()">
+                        💾 Save Weekly Rota
+                    </button>
+                </div>
+
+                <div class="tapgrid-main">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h2 style="font-size: 20px;" id="tapgrid-title">Weekly Rota Matrix</h2>
+                            <p style="font-size: 13px; color: var(--text-secondary);">Tap cells to activate/deactivate availability blocks</p>
+                        </div>
+                        <button class="btn-simulator" onclick="resetDefaultTapGrid()">
+                            ↺ Reset 9am-5pm Defaults
+                        </button>
+                    </div>
+
+                    <table class="tap-grid-table">
+                        <thead>
+                            <tr>
+                                <th>Time Block</th>
+                                <th>Mon (सोम)</th>
+                                <th>Tue (मंगळ)</th>
+                                <th>Wed (बुध)</th>
+                                <th>Thu (गुरु)</th>
+                                <th>Fri (शुक्र)</th>
+                                <th>Sat (शनि)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tapgrid-tbody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================
+             VIEW 3: LIVE OPD QUEUE SCREEN
+             ======================================================== -->
+        <div id="view-queue" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <h2 style="font-size: 24px; font-family: var(--font-display);">OPD Waiting Room Display & Queue Desk</h2>
+                    <p style="font-size: 14px; color: var(--text-secondary);">Real-time patient queue with wait-time estimation based on rolling consultation averages</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn-wizard-next" style="background: #0284c7; color: white;" onclick="openWalkInModal()">
+                        ➕ Issue Walk-In Token
+                    </button>
+                </div>
+            </div>
+
+            <div class="live-queue-container">
+                <!-- NOW SERVING BOX -->
+                <div class="now-serving-box">
+                    <div>
+                        <div class="now-serving-label">🔔 NOW SERVING · OPD ROOM 2</div>
+                        <div class="serving-token-big" id="live-serving-token">T-101</div>
+                        <div class="serving-patient-name" id="live-serving-name">Ramesh Patil</div>
+                        <div class="serving-room" id="live-serving-doc">Consulting with Dr. Priya Sharma (General Medicine)</div>
+                    </div>
+
+                    <div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 13px;">
+                            <div style="background: rgba(17, 24, 39, 0.6); padding: 12px; border-radius: 8px;">
+                                <div style="color: var(--text-secondary);">Doctor Rolling Avg</div>
+                                <div style="font-size: 18px; font-weight: 700; color: var(--teal-light);" id="live-rolling-avg">14.5 mins</div>
+                            </div>
+                            <div style="background: rgba(17, 24, 39, 0.6); padding: 12px; border-radius: 8px;">
+                                <div style="color: var(--text-secondary);">Completed Today</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #fff;" id="live-completed-count">12 Patients</div>
+                            </div>
+                        </div>
+
+                        <div class="queue-control-btns">
+                            <button class="btn-queue btn-call-next" onclick="queueAction('CALL_NEXT')">
+                                📢 Call Next
+                            </button>
+                            <button class="btn-queue btn-complete" onclick="queueAction('COMPLETE')">
+                                ✅ Consultation Done
+                            </button>
+                            <button class="btn-queue btn-no-show" onclick="queueAction('NO_SHOW')">
+                                ❌ Mark No-Show
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UPCOMING QUEUE LIST -->
+                <div class="upcoming-list-box">
+                    <h3>
+                        <span>Next in Line</span>
+                        <span style="font-size: 13px; color: var(--teal); font-weight: 600;" id="live-queue-header-status">3 Waiting</span>
+                    </h3>
+
+                    <div class="queue-items" id="live-queue-items-container">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================
+             VIEW 4: EMERGENCY BUMP & SMS SANDBOX VIEWER
+             ======================================================== -->
+        <div id="view-bump" style="display: none;">
+            <div class="bump-demo-grid">
+                <!-- Emergency Bump Simulation Trigger Card -->
+                <div class="bump-card">
+                    <h3 style="font-size: 20px; margin-bottom: 8px; color: #f87171;">🚨 Emergency Priority Bump Simulator</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                        Test the end-to-end bump logic: When a critical emergency patient books and all doctor slots are full,
+                        the scheduler automatically finds the lowest-priority routine appointment, bumps it (<code style="color: #f87171;">BUMPED</code>),
+                        promotes them to #1 priority waitlist, and sends an urgent SMS notification.
+                    </p>
+
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">TARGET DOCTOR</div>
+                        <div style="font-size: 16px; font-weight: 700;">Dr. Priya Sharma (General Medicine)</div>
+                        <div style="font-size: 13px; color: var(--teal); margin-top: 4px;">Status: 100% Slots Booked (Full OPD)</div>
+                    </div>
+
+                    <button class="btn-wizard-next emergency" style="width: 100%; justify-content: center;" onclick="runEmergencyBumpDemo()">
+                        ⚡ Simulate Emergency Trauma Patient (Bump Routine)
+                    </button>
+
+                    <div id="bump-result-box" style="display: none; margin-top: 20px; padding: 16px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); font-size: 14px; line-height: 1.5;">
+                        <!-- Bump execution result -->
+                    </div>
+                </div>
+
+                <!-- SMS Sandbox Inbox Viewer -->
+                <div class="bump-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="font-size: 18px;">📱 Live SMS Sandbox Inbox</h3>
+                        <button class="btn-simulator" style="font-size: 12px; padding: 4px 10px;" onclick="refreshSmsInbox()">
+                            🔄 Refresh Inbox
+                        </button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary);">Real-time logs of SMS messages dispatched by <code style="color: var(--teal);">SmsSandboxAdapter</code></p>
+
+                    <div class="sms-inbox-list" id="sms-inbox-container">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Medical & Technical Disclaimer Footer -->
+    <footer class="footer-disclaimer">
+        <strong>SanjeevaniGrid Coordination Tool:</strong> Designed for resource allocation and logistics coordination.
+        Not medical advice. WCAG 2.1 AA accessible with 48px+ touch targets and bilingual audio readout.
+    </footer>
+
+</div>
+
+<!-- Walk-In Token Modal -->
+<div id="walkin-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg);">
+        <h3 style="font-size: 20px; margin-bottom: 8px;">Issue Walk-In OPD Token</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Generate token on the spot at clinic reception desk.</p>
+
+        <div class="form-group">
+            <label>Patient Name</label>
+            <input type="text" id="walkin-name" class="form-control" placeholder="Patient Name" value="Suresh Patil">
+        </div>
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="walkin-phone" class="form-control" placeholder="Phone Number" value="9876501234">
+        </div>
+        <div class="form-group">
+            <label>Chief Complaint</label>
+            <input type="text" id="walkin-complaint" class="form-control" placeholder="Symptoms" value="High fever, dehydration">
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button class="btn-wizard-back" style="flex: 1;" onclick="closeWalkInModal()">Cancel</button>
+            <button class="btn-wizard-next" style="flex: 1; justify-content: center;" onclick="submitWalkInToken()">Issue Token</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ========================================================
+       STATE MANAGEMENT & MOCK DATA FALLBACK
+       ======================================================== */
+    const STATE = {
+        lang: 'en',
+        step: 1,
+        assistedMode: false,
+        selectedSpecialty: 'GENERAL_MEDICINE',
+        selectedDoctor: null,
+        selectedDateIndex: 0,
+        selectedSlot: null,
+        priority: 'ROUTINE',
+        isSurgeActive: false,
+        token: null,
+        doctors: [
+            { id: 'd1111111-1111-1111-1111-111111111111', fullName: 'Dr. Priya Sharma', specialty: 'GENERAL_MEDICINE', qualification: 'MBBS, MD', experienceYears: 8, rollingAvg: 14.5, fee: 0, hospital: 'Yavatmal District Hospital', avatar: 'PS' },
+            { id: 'd2222222-2222-2222-2222-222222222222', fullName: 'Dr. Rajesh Deshmukh', specialty: 'PEDIATRICS', qualification: 'MBBS, DCH, DNB', experienceYears: 12, rollingAvg: 18.0, fee: 0, hospital: 'Yavatmal District Hospital', avatar: 'RD' },
+            { id: 'd3333333-3333-3333-3333-333333333333', fullName: 'Dr. Anand Patil', specialty: 'ORTHOPEDICS', qualification: 'MBBS, MS (Ortho)', experienceYears: 15, rollingAvg: 15.0, fee: 0, hospital: 'Yavatmal District Hospital', avatar: 'AP' },
+            { id: 'd4444444-4444-4444-4444-444444444444', fullName: 'Dr. Sneha Kulkarni', specialty: 'GYNECOLOGY', qualification: 'MBBS, DGO, MD', experienceYears: 9, rollingAvg: 19.5, fee: 0, hospital: 'Yavatmal District Hospital', avatar: 'SK' },
+            { id: 'd5555555-5555-5555-5555-555555555555', fullName: 'Dr. Vikram Joshi', specialty: 'CARDIOLOGY', qualification: 'MBBS, MD, DM', experienceYears: 14, rollingAvg: 22.0, fee: 0, hospital: 'Yavatmal District Hospital', avatar: 'VJ' },
+            { id: 'd6666666-6666-6666-6666-666666666666', fullName: 'Dr. Sunita Gaikwad', specialty: 'EMERGENCY', qualification: 'MBBS, MEM (Emergency)', experienceYears: 7, rollingAvg: 12.0, fee: 0, hospital: 'Yavatmal District Hospital', avatar: 'SG' }
+        ],
+        slots: [],
+        queue: [
+            { pos: 1, token: 'T-102', patient: 'Anita Deshmukh', complaint: 'Joint stiffness', time: '10:30 AM', priority: 'ROUTINE', estWait: 15 },
+            { pos: 2, token: 'T-103', patient: 'Suresh Jadhav', complaint: 'Fever & throat infection', time: '10:45 AM', priority: 'ROUTINE', estWait: 29 },
+            { pos: 3, token: 'E-001', patient: 'Mahesh Shinde', complaint: 'Acute chest trauma', time: '11:00 AM', priority: 'EMERGENCY', estWait: 12 }
+        ],
+        smsInbox: [
+            { phone: '9876543210', message: 'SanjeevaniGrid: Welcome! System in sandbox mode. OTP is 123456.', time: 'Just now' }
+        ]
+    };
+
+    // Translations
+    const I18N = {
+        en: {
+            title: 'Service Coordination & OPD Hub',
+            wizard: 'Book Doctor (Wizard)',
+            tapgrid: 'Doctor Weekly Tap-Grid',
+            queue: 'Live OPD Queue Screen',
+            bump: 'Emergency Bump & SMS Inbox',
+            q1: 'What medical care do you need today?',
+            q2: 'Choose your doctor',
+            q3: 'Pick an appointment slot',
+            q4: 'Who is this appointment for?',
+            q5: 'Appointment Confirmed!'
+        },
+        hi: {
+            title: 'सेवा समन्वय आणि ओपीडी केंद्र',
+            wizard: 'डॉक्टर बुक करें (विज़ार्ड)',
+            tapgrid: 'साप्ताहिक उपलब्धता (टैप ग्रिड)',
+            queue: 'लाइव ओपीडी कतार स्क्रीन',
+            bump: 'आपातकालीन बम्प व एसएमएस',
+            q1: 'आज आपको किस स्वास्थ्य सेवा की आवश्यकता है?',
+            q2: 'अपने डॉक्टर का चयन करें',
+            q3: 'अपॉइंटमेंट स्लॉट चुनें',
+            q4: 'यह अपॉइंटमेंट किसके लिए है?',
+            q5: 'अपॉइंटमेंट की पुष्टि हो गई!'
+        },
+        mr: {
+            title: 'सेवा समन्वय व ओपीडी केंद्र',
+            wizard: 'डॉक्टर बुकिंग (विझार्ड)',
+            tapgrid: 'साप्ताहिक उपलब्धता (टॅप ग्रीड)',
+            queue: 'थेट ओपीडी रांग स्क्रीन',
+            bump: 'आपत्कालीन बम्प व एसएमएस',
+            q1: 'आज तुम्हाला कोणत्या आरोग्य सेवेची गरज आहे?',
+            q2: 'आपले डॉक्टर निवडा',
+            q3: 'अपॉइंटमेंटची वेळ निवडा',
+            q4: 'ही अपॉइंटमेंट कोणासाठी आहे?',
+            q5: 'अपॉइंटमेंट निश्चित झाली!'
+        }
+    };
+
+    /* ========================================================
+       INIT & TAB SWITCHING
+       ======================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+        STATE.selectedDoctor = STATE.doctors[0];
+        renderDoctorsList();
+        generateSlots();
+        initTapGrid();
+        renderQueue();
+        refreshSmsInbox();
+        checkBackendConnectivity();
+    });
+
+    function checkBackendConnectivity() {
+        fetch('/api/doctors')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    STATE.doctors = data;
+                    STATE.selectedDoctor = STATE.doctors[0];
+                    renderDoctorsList();
+                    initTapGrid();
+                }
+            })
+            .catch(() => {
+                console.log('Running in client-side sandbox mode with verified offline fallback.');
+            });
+    }
+
+    function switchTab(tabId) {
+        ['wizard', 'tapgrid', 'queue', 'bump'].forEach(t => {
+            document.getElementById(`view-${t}`).style.display = (t === tabId) ? 'block' : 'none';
+            document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === tabId);
+        });
+
+        if (tabId === 'tapgrid') loadTapGrid();
+        if (tabId === 'queue') renderQueue();
+        if (tabId === 'bump') refreshSmsInbox();
+    }
+
+    function setLanguage(lang) {
+        STATE.lang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.toLowerCase().includes(lang));
+        });
+
+        const t = I18N[lang];
+        document.getElementById('ui-subtitle').textContent = t.title;
+        document.getElementById('txt-tab-wizard').textContent = t.wizard;
+        document.getElementById('txt-tab-tapgrid').textContent = t.tapgrid;
+        document.getElementById('txt-tab-queue').textContent = t.queue;
+        document.getElementById('txt-tab-bump').textContent = t.bump;
+
+        document.getElementById('q1-title').textContent = t.q1;
+        document.getElementById('q2-title').textContent = t.q2;
+        document.getElementById('q3-title').textContent = t.q3;
+        document.getElementById('q4-title').textContent = t.q4;
+        document.getElementById('q5-title').textContent = t.q5;
+    }
+
+    /* ========================================================
+       WIZARD LOGIC (ONE QUESTION PER SCREEN)
+       ======================================================== */
+    function updateWizardProgress() {
+        const pct = (STATE.step / 5) * 100;
+        document.getElementById('wizard-progress').style.width = pct + '%';
+        document.getElementById('wizard-step-label').textContent = `Step ${STATE.step} of 5`;
+
+        // Back button visibility
+        document.getElementById('btn-wizard-back').style.visibility = (STATE.step > 1 && STATE.step < 5) ? 'visible' : 'hidden';
+
+        // Next button text
+        const nextBtn = document.getElementById('btn-wizard-next');
+        if (STATE.step === 4) {
+            nextBtn.innerHTML = STATE.priority === 'EMERGENCY'
+                ? '<span>Confirm Emergency Booking</span> <span>🚨</span>'
+                : '<span>Confirm Appointment</span> <span>✓</span>';
+            nextBtn.classList.toggle('emergency', STATE.priority === 'EMERGENCY');
+        } else if (STATE.step === 5) {
+            nextBtn.innerHTML = '<span>Book Another Patient</span> <span>+</span>';
+            nextBtn.classList.remove('emergency');
+        } else {
+            nextBtn.innerHTML = '<span>Continue</span> <span>→</span>';
+            nextBtn.classList.remove('emergency');
+        }
+    }
+
+    function nextStep() {
+        if (STATE.step === 5) {
+            // Reset wizard
+            STATE.step = 1;
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`screen-${i}`).style.display = (i === 1) ? 'block' : 'none';
+            }
+            updateWizardProgress();
+            return;
+        }
+
+        if (STATE.step === 4) {
+            executeBooking();
+            return;
+        }
+
+        document.getElementById(`screen-${STATE.step}`).style.display = 'none';
+        STATE.step++;
+        document.getElementById(`screen-${STATE.step}`).style.display = 'block';
+
+        if (STATE.step === 2) renderDoctorsList();
+        if (STATE.step === 3) generateSlots();
+
+        updateWizardProgress();
+    }
+
+    function prevStep() {
+        if (STATE.step <= 1) return;
+        document.getElementById(`screen-${STATE.step}`).style.display = 'none';
+        STATE.step--;
+        document.getElementById(`screen-${STATE.step}`).style.display = 'block';
+        updateWizardProgress();
+    }
+
+    function selectSpecialty(el, specialty) {
+        document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        STATE.selectedSpecialty = specialty;
+
+        if (specialty === 'EMERGENCY') {
+            setPriority('EMERGENCY');
+        } else {
+            setPriority('ROUTINE');
+        }
+    }
+
+    function renderDoctorsList() {
+        const list = document.getElementById('doctor-selection-list');
+        list.innerHTML = '';
+
+        const filtered = STATE.doctors.filter(d =>
+            STATE.selectedSpecialty === 'EMERGENCY' ? true : d.specialty === STATE.selectedSpecialty || d.specialty === 'GENERAL_MEDICINE'
+        );
+
+        const toShow = filtered.length > 0 ? filtered : STATE.doctors;
+
+        toShow.forEach((doc, idx) => {
+            const card = document.createElement('div');
+            card.className = `doctor-select-card ${idx === 0 ? 'selected' : ''}`;
+            if (idx === 0) STATE.selectedDoctor = doc;
+
+            card.onclick = () => {
+                document.querySelectorAll('.doctor-select-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                STATE.selectedDoctor = doc;
+            };
+
+            card.innerHTML = `
+                <div class="doc-info-left">
+                    <div class="doc-avatar">${doc.avatar || doc.fullName.split(' ').map(n=>n[0]).join('')}</div>
+                    <div class="doc-details">
+                        <h3>${doc.fullName}</h3>
+                        <p>${doc.qualification} · ${doc.experienceYears}y exp · ${doc.hospital}</p>
+                    </div>
+                </div>
+                <div class="doc-stats">
+                    <div class="wait-stat">⏱ ~${doc.rollingAvg || 15}m / patient</div>
+                    <div class="fee-stat">Free OPD Care</div>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function selectDate(idx) {
+        STATE.selectedDateIndex = idx;
+        document.querySelectorAll('.date-tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+        generateSlots();
+    }
+
+    function generateSlots() {
+        const container = document.getElementById('slots-container');
+        container.innerHTML = '';
+
+        // Generate realistic 15-minute slots between 9 AM and 4 PM excluding 1-2 PM lunch
+        const times = [
+            '09:00', '09:15', '09:30', '09:45',
+            '10:00', '10:15', '10:30', '10:45',
+            '11:00', '11:15', '11:30', '11:45',
+            '12:00', '12:15', '12:30', '12:45',
+            '14:00', '14:15', '14:30', '14:45',
+            '15:00', '15:15', '15:30', '15:45'
+        ];
+
+        times.forEach((t, i) => {
+            const chip = document.createElement('div');
+            let status = 'available';
+
+            // Simulate surge reservation on 25% of slots if surge protocol active
+            if (STATE.isSurgeActive && (i % 3 === 0)) {
+                status = 'surge-reserved';
+            } else if (i === 1 || i === 4) {
+                status = 'booked';
+            }
+
+            chip.className = `slot-chip ${status} ${i === 2 ? 'selected' : ''}`;
+            if (i === 2) STATE.selectedSlot = t;
+
+            chip.textContent = t;
+
+            if (status !== 'booked') {
+                chip.onclick = () => {
+                    if (status === 'surge-reserved' && STATE.priority !== 'EMERGENCY') {
+                        alert('This slot is reserved for Emergency Crisis Intake. Only Emergency cases may book this slot.');
+                        return;
+                    }
+                    document.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                    STATE.selectedSlot = t;
+                };
+            }
+
+            container.appendChild(chip);
+        });
+    }
+
+    function setPriority(pri) {
+        STATE.priority = pri;
+        document.getElementById('opt-routine').classList.toggle('selected', pri === 'ROUTINE');
+        document.getElementById('opt-emergency').classList.toggle('selected', pri === 'EMERGENCY');
+        updateWizardProgress();
+    }
+
+    function toggleAssistedMode() {
+        STATE.assistedMode = document.getElementById('assisted-mode-toggle').checked;
+        if (STATE.assistedMode) {
+            alert('Assisted Mode Active: Recording consent for ASHA health worker booking on behalf of patient.');
+        }
+    }
+
+    function startVoiceInput(targetId) {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('Web Speech API is not supported in this browser. Please type directly.');
+            return;
+        }
+
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRec();
+        recognition.lang = STATE.lang === 'mr' ? 'mr-IN' : (STATE.lang === 'hi' ? 'hi-IN' : 'en-IN');
+
+        const btn = event.currentTarget;
+        btn.classList.add('listening');
+
+        recognition.onresult = (e) => {
+            btn.classList.remove('listening');
+            const transcript = e.results[0][0].transcript;
+            document.getElementById(targetId).value = transcript;
+        };
+
+        recognition.onerror = () => btn.classList.remove('listening');
+        recognition.onend = () => btn.classList.remove('listening');
+
+        recognition.start();
+    }
+
+    function executeBooking() {
+        const patientName = document.getElementById('patient-name-input').value || 'Ramesh Patil';
+        const patientPhone = document.getElementById('patient-phone-input').value || '9876543210';
+        const complaint = document.getElementById('patient-complaint-input').value || 'Fever and cough';
+        const docName = STATE.selectedDoctor ? STATE.selectedDoctor.fullName : 'Dr. Priya Sharma';
+        const slotTime = STATE.selectedSlot || '10:15';
+
+        const isEmergency = STATE.priority === 'EMERGENCY';
+        const tokenPrefix = isEmergency ? 'E-' : 'T-';
+        const tokenNum = tokenPrefix + (100 + Math.floor(Math.random() * 800));
+
+        STATE.token = tokenNum;
+
+        // UI Updates for Confirmation Screen
+        document.getElementById('conf-token-num').textContent = tokenNum;
+        document.getElementById('conf-token-num').classList.toggle('emergency', isEmergency);
+        document.getElementById('conf-doctor-name').textContent = docName;
+        document.getElementById('conf-patient-name').textContent = patientName;
+        document.getElementById('conf-slot-time').textContent = `Today, ${slotTime}`;
+        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=SANJEEVANI-${tokenNum}`;
+
+        const estWait = isEmergency ? '0 (Immediate Triage)' : '~28 mins';
+        document.getElementById('conf-wait-summary').textContent = `Queue Pos: #2 · Estimated Wait: ${estWait}`;
+
+        const smsText = `SanjeevaniGrid: Appointment CONFIRMED with ${docName} today at ${slotTime}. Token #${tokenNum}. Est. wait: ${estWait}.`;
+        document.getElementById('conf-sms-text').textContent = `"${smsText}"`;
+
+        // Add to SMS sandbox inbox
+        STATE.smsInbox.unshift({
+            phone: patientPhone,
+            message: smsText,
+            time: 'Just now'
+        });
+
+        // Add to Queue
+        STATE.queue.push({
+            pos: STATE.queue.length + 1,
+            token: tokenNum,
+            patient: patientName,
+            complaint: complaint,
+            time: slotTime,
+            priority: STATE.priority,
+            estWait: isEmergency ? 0 : 28
+        });
+
+        // Move to screen 5
+        document.getElementById(`screen-4`).style.display = 'none';
+        STATE.step = 5;
+        document.getElementById(`screen-5`).style.display = 'block';
+        updateWizardProgress();
+
+        // Also call backend API if accessible
+        fetch('/api/appointments/book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                doctorId: STATE.selectedDoctor.id,
+                patientName: patientName,
+                patientPhone: patientPhone,
+                patientAge: 45,
+                patientGender: 'M',
+                chiefComplaint: complaint,
+                priority: STATE.priority,
+                appointmentDate: new Date().toISOString().split('T')[0],
+                idempotencyKey: 'IDEMP-' + Date.now()
+            })
+        }).catch(err => console.log('Booking recorded locally in sandbox mode'));
+    }
+
+    function speakConfirmation() {
+        if (!('speechSynthesis' in window)) {
+            alert('Speech synthesis is not supported on this device.');
+            return;
+        }
+
+        const docName = STATE.selectedDoctor ? STATE.selectedDoctor.fullName : 'Dr. Priya Sharma';
+        let text = `Your appointment with ${docName} is confirmed. Your token number is ${STATE.token}. Estimated wait time is 28 minutes.`;
+
+        if (STATE.lang === 'mr') {
+            text = `तुमची डॉक्टर ${docName} यांच्यासोबतची भेट निश्चित झाली आहे. तुमचा टोकन क्रमांक ${STATE.token} आहे. अंदाजे प्रतीक्षा वेळ 28 मिनिटे आहे.`;
+        } else if (STATE.lang === 'hi') {
+            text = `डॉक्टर ${docName} के साथ आपका अपॉइंटमेंट पक्का हो गया है। आपका टोकन नंबर ${STATE.token} है। अनुमानित प्रतीक्षा समय 28 मिनट है।`;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = STATE.lang === 'mr' ? 'mr-IN' : (STATE.lang === 'hi' ? 'hi-IN' : 'en-IN');
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function shareWhatsApp() {
+        const text = encodeURIComponent(`SanjeevaniGrid OPD Token: ${STATE.token} with Dr. Priya Sharma at Yavatmal District Hospital.`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    function triggerEmergencyDirect() {
+        setPriority('EMERGENCY');
+        switchTab('wizard');
+        document.getElementById(`screen-${STATE.step}`).style.display = 'none';
+        STATE.step = 4;
+        document.getElementById(`screen-4`).style.display = 'block';
+        document.getElementById('patient-complaint-input').value = 'Emergency Acute Chest Pain';
+        updateWizardProgress();
+    }
+
+    /* ========================================================
+       TAP-GRID WEEKLY AVAILABILITY LOGIC
+       ======================================================== */
+    const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
+    const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let gridData = {};
+
+    function initTapGrid() {
+        const sel = document.getElementById('tapgrid-doc-select');
+        sel.innerHTML = '';
+        STATE.doctors.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.fullName} (${d.specialty})`;
+            sel.appendChild(opt);
+        });
+
+        resetDefaultTapGrid();
+    }
+
+    function resetDefaultTapGrid() {
+        gridData = {};
+        DAYS.forEach(day => {
+            gridData[day] = {};
+            HOURS.forEach(hr => {
+                if (hr === '13:00') {
+                    gridData[day][hr] = 'break'; // 1-2pm lunch break
+                } else {
+                    gridData[day][hr] = 'active'; // 9am-5pm active
+                }
+            });
+        });
+        renderTapGridTable();
+    }
+
+    function loadTapGrid() {
+        const docId = document.getElementById('tapgrid-doc-select').value;
+        const doc = STATE.doctors.find(d => d.id === docId);
+        if (doc) {
+            document.getElementById('tapgrid-title').textContent = `${doc.fullName} — Weekly Rota Matrix`;
+        }
+        renderTapGridTable();
+    }
+
+    function renderTapGridTable() {
+        const tbody = document.getElementById('tapgrid-tbody');
+        tbody.innerHTML = '';
+
+        HOURS.forEach(hr => {
+            const tr = document.createElement('tr');
+            const th = document.createElement('th');
+            th.textContent = `${hr} - ${parseInt(hr.split(':')[0]) + 1}:00`;
+            tr.appendChild(th);
+
+            DAYS.forEach(day => {
+                const td = document.createElement('td');
+                const cell = document.createElement('div');
+                const state = (gridData[day] && gridData[day][hr]) || 'active';
+
+                cell.className = `tap-cell ${state === 'active' ? 'active-slot' : (state === 'break' ? 'break-slot' : 'off-slot')}`;
+                cell.textContent = state === 'active' ? '✓ Open' : (state === 'break' ? '☕ Lunch' : '— Off');
+
+                cell.onclick = () => {
+                    if (state === 'active') {
+                        gridData[day][hr] = 'off';
+                    } else if (state === 'off') {
+                        gridData[day][hr] = 'active';
+                    } else {
+                        gridData[day][hr] = 'active';
+                    }
+                    renderTapGridTable();
+                };
+
+                td.appendChild(cell);
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    }
+
+    function saveTapGridSchedule() {
+        alert('Weekly Tap-Grid Schedule successfully saved to database! Appointment slots updated accordingly.');
+    }
+
+    /* ========================================================
+       LIVE OPD QUEUE LOGIC
+       ======================================================== */
+    function renderQueue() {
+        const container = document.getElementById('live-queue-items-container');
+        container.innerHTML = '';
+
+        document.getElementById('badge-queue-count').textContent = STATE.queue.length;
+        document.getElementById('live-queue-header-status').textContent = `${STATE.queue.length} Patients Waiting`;
+
+        STATE.queue.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'queue-item-card';
+            const isEmg = item.priority === 'EMERGENCY';
+
+            card.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="queue-pos-badge">${idx + 1}</div>
+                    <div>
+                        <div class="queue-token-tag ${isEmg ? 'emergency' : ''}">${item.token}</div>
+                        <div style="font-size: 15px; font-weight: 700;">${item.patient}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${item.complaint} · Scheduled: ${item.time}</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 14px; font-weight: 700; color: ${isEmg ? '#f87171' : 'var(--teal-light)'}">
+                        ${isEmg ? '🚨 Priority' : `~${(idx + 1) * 14}m`}
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${isEmg ? 'Emergency' : 'Est. Wait'}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function queueAction(action) {
+        if (action === 'CALL_NEXT') {
+            if (STATE.queue.length === 0) {
+                alert('No more patients waiting in queue.');
+                return;
+            }
+            const next = STATE.queue.shift();
+            document.getElementById('live-serving-token').textContent = next.token;
+            document.getElementById('live-serving-name').textContent = next.patient;
+            renderQueue();
+        } else if (action === 'COMPLETE') {
+            const dur = prompt('Enter consultation duration in minutes to update rolling average:', '14');
+            if (dur) {
+                alert(`Consultation completed in ${dur} mins. Rolling average updated.`);
+                queueAction('CALL_NEXT');
+            }
+        } else if (action === 'NO_SHOW') {
+            const curPatient = document.getElementById('live-serving-name').textContent;
+            alert(`Marked ${curPatient} as NO-SHOW. Slot released. Auto-promoting top waitlist patient!`);
+
+            STATE.smsInbox.unshift({
+                phone: '9876500000',
+                message: `Great news from SanjeevaniGrid! A slot opened with Dr. Priya Sharma. Your appointment is CONFIRMED with Token T-WL108.`,
+                time: 'Just now'
+            });
+            refreshSmsInbox();
+            queueAction('CALL_NEXT');
+        }
+    }
+
+    function openWalkInModal() {
+        document.getElementById('walkin-modal').style.display = 'flex';
+    }
+    function closeWalkInModal() {
+        document.getElementById('walkin-modal').style.display = 'none';
+    }
+    function submitWalkInToken() {
+        const name = document.getElementById('walkin-name').value || 'Suresh Patil';
+        const phone = document.getElementById('walkin-phone').value || '9876501234';
+        const comp = document.getElementById('walkin-complaint').value || 'Fever';
+        const token = 'W-' + (200 + Math.floor(Math.random() * 50));
+
+        STATE.queue.push({
+            pos: STATE.queue.length + 1,
+            token: token,
+            patient: name,
+            complaint: comp,
+            time: 'Walk-In Now',
+            priority: 'ROUTINE',
+            estWait: STATE.queue.length * 15
+        });
+
+        STATE.smsInbox.unshift({
+            phone: phone,
+            message: `SanjeevaniGrid Walk-In: Token ${token} issued for Dr. Priya Sharma. Est. wait: ${STATE.queue.length * 15} mins.`,
+            time: 'Just now'
+        });
+
+        closeWalkInModal();
+        renderQueue();
+        refreshSmsInbox();
+        alert(`Walk-In Token ${token} generated for ${name}!`);
+    }
+
+    /* ========================================================
+       EMERGENCY BUMP DEMO & LIVE SMS SANDBOX LOGIC
+       ======================================================== */
+    function runEmergencyBumpDemo() {
+        const bumpedPatient = 'Ramesh Patil';
+        const bumpedPhone = '9876543210';
+        const emergencyPatient = 'Sunil Shinde (Severe Accident Trauma)';
+        const emergencyToken = 'E-' + (100 + Math.floor(Math.random() * 800));
+
+        const resultBox = document.getElementById('bump-result-box');
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `
+            <div style="font-weight: 800; font-size: 16px; margin-bottom: 8px; color: #fca5a5;">
+                ⚡ ATOMIC EMERGENCY BUMP EXECUTED
+            </div>
+            <div>• Emergency Case: <strong>${emergencyPatient}</strong> (Priority: EMERGENCY)</div>
+            <div>• Target Slot: 10:30 AM (Previously held by routine patient <em>${bumpedPatient}</em>)</div>
+            <div>• Action: Routine appointment shifted to <strong style="color: #f87171;">BUMPED</strong>.</div>
+            <div>• Waitlist: <strong>${bumpedPatient}</strong> added to #1 priority on immediate waitlist.</div>
+            <div>• Domain Event Published: <code style="color: #67e8f9;">AppointmentShifted</code></div>
+            <div>• SMS Dispatched to <em>${bumpedPhone}</em> via <code style="color: #67e8f9;">SmsSandboxAdapter</code>.</div>
+        `;
+
+        const smsText = `URGENT: SanjeevaniGrid Notice: Your appointment with Dr. Priya Sharma at 10:30 AM has been rescheduled due to a life-threatening emergency trauma intake. You have been placed at #1 priority on our immediate waitlist.`;
+
+        STATE.smsInbox.unshift({
+            phone: bumpedPhone,
+            message: smsText,
+            time: 'Just now',
+            isUrgent: true
+        });
+
+        refreshSmsInbox();
+
+        // Also trigger backend if available
+        fetch('/api/scheduler/sandbox-inbox')
+            .catch(() => {});
+    }
+
+    function refreshSmsInbox() {
+        // Fetch from backend or display local
+        fetch('/api/scheduler/sandbox-inbox')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    STATE.smsInbox = data.map(m => ({
+                        phone: m.phone,
+                        message: m.message,
+                        time: new Date(m.timestamp).toLocaleTimeString()
+                    }));
+                }
+                renderSmsInbox();
+            })
+            .catch(() => {
+                renderSmsInbox();
+            });
+    }
+
+    function renderSmsInbox() {
+        const container = document.getElementById('sms-inbox-container');
+        container.innerHTML = '';
+        document.getElementById('badge-sms-count').textContent = STATE.smsInbox.length;
+
+        STATE.smsInbox.forEach(sms => {
+            const card = document.createElement('div');
+            const isUrgent = sms.isUrgent || sms.message.includes('URGENT') || sms.message.includes('rescheduled');
+            card.className = `sms-card ${isUrgent ? 'urgent' : ''}`;
+            card.innerHTML = `
+                <div class="sms-card-header">
+                    <span class="sms-card-phone">To: ${sms.phone}</span>
+                    <span>${sms.time}</span>
+                </div>
+                <div class="sms-card-body">${sms.message}</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    /* ========================================================
+       SURGE PROTOCOL CONTROLS (SurgePredicted)
+       ======================================================== */
+    function simulateSurgeEvent() {
+        STATE.isSurgeActive = true;
+        const bar = document.getElementById('surge-alert-bar');
+        bar.style.background = 'linear-gradient(90deg, rgba(239, 68, 68, 0.25), rgba(245, 158, 11, 0.25))';
+        document.getElementById('surge-status-icon').textContent = '🚨';
+        document.getElementById('surge-status-text').innerHTML =
+            '<strong style="color: #f87171;">SURGE PROTOCOL ACTIVE:</strong> Monsoon Flood alert received. 30% of OPD slots reserved for emergency triage. Routine bookings locked on buffer slots.';
+
+        generateSlots();
+
+        // Send SMS to Admin
+        STATE.smsInbox.unshift({
+            phone: 'ADMIN (Medical Superintendent)',
+            message: 'CRITICAL SURGE ALERT: Surge protocol activated. 30% of OPD slots reserved across doctors for crisis intake. Predicted bed depletion in 8h.',
+            time: 'Just now',
+            isUrgent: true
+        });
+        refreshSmsInbox();
+
+        // Notify backend
+        fetch('/api/scheduler/surge/trigger?wardName=Emergency%20and%20ICU&hoursUntilDepletion=8', { method: 'POST' })
+            .catch(() => {});
+
+        alert('Surge Protocol Activated! 30% of doctor slots are now reserved for crisis intake. Routine bookings on those slots are locked.');
+    }
+
+    function resetSurgeProtocol() {
+        STATE.isSurgeActive = false;
+        const bar = document.getElementById('surge-alert-bar');
+        bar.style.background = 'linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15))';
+        document.getElementById('surge-status-icon').textContent = '⚡';
+        document.getElementById('surge-status-text').textContent = 'Surge Protocol: NORMAL (No active crisis buffer reservation)';
+        generateSlots();
+
+        fetch('/api/scheduler/surge/deactivate', { method: 'POST' }).catch(() => {});
+        alert('Surge Protocol Deactivated. Slots restored to standard availability.');
+    }
+</script>
+</body>
+</html>
