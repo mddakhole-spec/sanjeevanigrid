@@ -1,0 +1,41 @@
+# Build output
+target/
+build/
+dist/
+out/
+
+# Dependencies
+node_modules/
+
+# Secrets and environment files (never commit these)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Frontend caches
+.vite/
+.cache/
+coverage/
+
+# Local databases and uploads
+*.db
+*.sqlite
+uploads/

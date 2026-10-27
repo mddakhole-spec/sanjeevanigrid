@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: sanjeevanigrid-db
+    environment:
+      POSTGRES_DB: sanjeevanigrid
+      POSTGRES_USER: sanjeevanigrid
+      POSTGRES_PASSWORD: sanjeevanigrid
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sanjeevanigrid -d sanjeevanigrid"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sanjeevanigrid-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sanjeevanigrid
+      DB_USER: sanjeevanigrid
+      DB_PASS: sanjeevanigrid
+      JWT_SECRET: c2FuamVldmFuaWdyaWQtand0LXNlY3JldC1rZXktZm9yLWRldmVsb3BtZW50LW9ubHktbm90LWZvci1wcm9kdWN0aW9u
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sanjeevanigrid-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8080
+
+volumes:
+  pgdata:
