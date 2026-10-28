@@ -47,11 +47,16 @@ public class SecurityConfig {
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/sms-inbox/**").permitAll()
+                .requestMatchers("/api/whatsapp-outbox/**").permitAll()
+                .requestMatchers("/api/telegram-status/**", "/api/telegram-toggle/**").permitAll()
                 .requestMatchers("/api/sim/**").permitAll()
                 .requestMatchers("/api/doctors/**").permitAll()
                 .requestMatchers("/api/appointments/**").permitAll()
                 .requestMatchers("/api/queue/**").permitAll()
                 .requestMatchers("/api/scheduler/**").permitAll()
+                .requestMatchers("/api/blood/**").permitAll()
+                .requestMatchers("/api/feed/**").permitAll()
+                .requestMatchers("/api/integration/**").permitAll()
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
                 // All other API endpoints require authentication

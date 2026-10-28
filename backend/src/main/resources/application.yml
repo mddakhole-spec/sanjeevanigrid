@@ -40,6 +40,14 @@ app:
   mode: sandbox
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  telegram:
+    enabled: ${TELEGRAM_ENABLED:false}
+    bot-token: ${TELEGRAM_BOT_TOKEN:mock_bot_token}
+    chat-id: ${TELEGRAM_CHAT_ID:mock_chat_id}
+  blood:
+    cooldown-days: 90
+    default-search-radius-km: 35.0
+    default-low-stock-threshold: 5
 
 # Actuator
 management:

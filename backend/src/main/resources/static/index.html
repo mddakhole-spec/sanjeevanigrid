@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanjeevaniGrid — Integrated Healthcare & Crisis Resource Platform</title>
+    <meta name="description" content="SanjeevaniGrid: One platform uniting Crisis Simulation, OPD Coordination, Blood Locator, Hospital Integrations, and Emergency Care.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1e2840;
+            --border: #2a3654;
+            --border-light: rgba(42, 54, 84, 0.6);
+            --text-primary: #e8ecf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --teal: #14b8a6;
+            --teal-light: #2dd4bf;
+            --teal-dark: #0d9488;
+            --teal-glow: rgba(20, 184, 166, 0.2);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.25);
+            --orange: #f59e0b;
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --radius: 16px;
+            --radius-lg: 24px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
+            --font-base: 'Inter', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-base);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 15% 15%, rgba(20,184,166,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 85% 85%, rgba(239,68,68,0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .header-logo {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 20px var(--teal-glow);
+        }
+
+        .header-title {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 20px;
+            background: linear-gradient(135deg, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sandbox-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--orange);
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--orange);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active, .lang-btn:hover {
+            background: var(--teal-dark);
+            color: #fff;
+            border-color: var(--teal);
+        }
+
+        .btn-emergency-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 16px var(--red-glow);
+            transition: all 0.2s;
+        }
+        .btn-emergency-top:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 24px var(--red-glow);
+        }
+
+        /* Main Container */
+        .portal-hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(20, 184, 166, 0.1);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--teal-light);
+            margin-bottom: 20px;
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 46px;
+            font-weight: 900;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 40%, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto 36px;
+            line-height: 1.6;
+        }
+
+        /* Mode Selector Toggle */
+        .mode-toggle-bar {
+            display: inline-flex;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 4px;
+            margin-bottom: 40px;
+        }
+        .mode-btn {
+            padding: 10px 24px;
+            border-radius: 26px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background: var(--teal-dark);
+            color: #fff;
+            box-shadow: 0 0 16px var(--teal-glow);
+        }
+
+        /* Simple Mode 4 Giant Tiles */
+        .giant-tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .giant-tile {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 28px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            min-height: 220px;
+        }
+        .giant-tile::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.05), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .giant-tile:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-light);
+            box-shadow: var(--shadow-lg);
+        }
+        .giant-tile:hover::before { opacity: 1; }
+
+        .tile-icon {
+            font-size: 54px;
+            line-height: 1;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+        }
+        .tile-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .tile-sub {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .tile-blue:hover { border-color: rgba(59, 130, 246, 0.6); box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
+        .tile-red:hover { border-color: rgba(239, 68, 68, 0.6); box-shadow: 0 0 30px rgba(239, 68, 68, 0.25); }
+        .tile-emergency { background: linear-gradient(135deg, #1e131d, #2d1217); border-color: rgba(239, 68, 68, 0.4); }
+        .tile-emergency:hover { border-color: var(--red); box-shadow: 0 0 40px var(--red-glow); }
+        .tile-teal:hover { border-color: rgba(20, 184, 166, 0.6); box-shadow: 0 0 30px var(--teal-glow); }
+
+        /* Pro Mode Module Cards */
+        .pro-modules-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            text-align: left;
+        }
+        .pro-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .pro-card:hover {
+            border-color: var(--teal);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Modal Emergency */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: var(--bg-card);
+            border: 2px solid var(--red);
+            border-radius: var(--radius);
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 40px var(--red-glow);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 18px; right: 18px;
+            background: none; border: none;
+            color: var(--text-muted);
+            font-size: 22px; cursor: pointer;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 32px; }
+            .giant-tiles-grid { grid-template-columns: 1fr; }
+            header { padding: 12px 16px; }
+            .header-actions { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="header-brand">
+            <div class="header-logo">⚡</div>
+            <div>
+                <div class="header-title">SanjeevaniGrid</div>
+                <div class="header-subtitle">Universal Healthcare Coordination</div>
+            </div>
+        </a>
+
+        <div class="header-actions">
+            <div class="sandbox-pill">
+                <div class="pulse-dot"></div>
+                <span id="txt-sandbox">SANDBOX MODE</span>
+            </div>
+
+            <!-- Language Buttons -->
+            <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" onclick="setLanguage('hi')">हिंदी</button>
+            <button class="lang-btn" onclick="setLanguage('mr')">मराठी</button>
+
+            <!-- Emergency Direct Button -->
+            <button class="btn-emergency-top" onclick="openEmergencyModal()">
+                <span>🚨 EMERGENCY</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Portal Hero -->
+    <main class="portal-hero">
+        <div class="hero-badge">
+            <span>✨ PILOT ACTIVE IN YAVATMAL DISTRICT, MAHARASHTRA</span>
+        </div>
+
+        <h1 class="hero-title" id="txt-hero-title">
+            Healthcare Access & Crisis Coordination
+        </h1>
+        <p class="hero-desc" id="txt-hero-desc">
+            Empowering rural citizens, doctors, blood banks, and crisis coordinators through an integrated, low-latency health network.
+        </p>
+
+        <!-- Mode Toggle Bar -->
+        <div class="mode-toggle-bar">
+            <button class="mode-btn active" id="btn-mode-simple" onclick="setMode('simple')">
+                <span id="txt-mode-simple">🌟 Citizen Mode (Simple)</span>
+            </button>
+            <button class="mode-btn" id="btn-mode-pro" onclick="setMode('pro')">
+                <span id="txt-mode-pro">💼 Staff & Admin Mode (Pro)</span>
+            </button>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SIMPLE MODE: 4 GIANT TILES -->
+        <!-- ============================================================ -->
+        <div id="simple-mode-grid" class="giant-tiles-grid">
+            <!-- 1. Book Doctor -->
+            <a href="service-coordination.html" class="giant-tile tile-blue">
+                <div class="tile-icon">🩺</div>
+                <div class="tile-title" id="tile-book-doctor">Book Doctor</div>
+                <div class="tile-sub" id="tile-book-doctor-sub">
+                    One-question appointment wizard, live OPD token tracking, and wait time prediction.
+                </div>
+            </a>
+
+            <!-- 2. Find Blood -->
+            <a href="blood-integration.html#request" class="giant-tile tile-red" onclick="sessionStorage.setItem('openTab', 'request')">
+                <div class="tile-icon">🩸</div>
+                <div class="tile-title" id="tile-find-blood">Find Blood</div>
+                <div class="tile-sub" id="tile-find-blood-sub">
+                    Stock check first, nearby voluntary donors second with one-tap WhatsApp alert.
+                </div>
+            </a>
+
+            <!-- 3. Emergency -->
+            <div class="giant-tile tile-emergency" style="cursor: pointer;" onclick="openEmergencyModal()">
+                <div class="tile-icon">🚨</div>
+                <div class="tile-title" style="color: var(--red);" id="tile-emergency">Emergency Help</div>
+                <div class="tile-sub" id="tile-emergency-sub">
+                    Nearest hospital with open bed, one-tap 108 ambulance call, share emergency GPS location.
+                </div>
+            </div>
+
+            <!-- 4. My Health Card -->
+            <div class="giant-tile tile-teal" style="cursor: pointer;" onclick="openHealthCardModal()">
+                <div class="tile-icon">💳</div>
+                <div class="tile-title" id="tile-health-card">My Health Card</div>
+                <div class="tile-sub" id="tile-health-card-sub">
+                    Digital QR Health ID card with emergency medical contacts and blood type.
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PRO MODE: ALL PLATFORM MODULES -->
+        <!-- ============================================================ -->
+        <div id="pro-mode-grid" class="pro-modules-grid">
+            <!-- Module 1: Crisis Simulator -->
+            <a href="simulator.html" class="pro-card">
+                <div>
+                    <div style="font-size: 32px; margin-bottom: 12px;">🌊</div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Crisis Resource Simulator</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Synthetic hospital data engine, Holt-Winters inflow forecaster, ward depletion prediction, surge scenario planner (Monsoon Flood, Dengue Outbreak).
+                    </p>
+                </div>
+                <div style="margin-top: 18px; font-weight: 700; color: var(--teal); font-size: 13px;">Launch Simulator &rarr;</div>
+            </a>
+
+            <!-- Module 2: Service Coordination & OPD -->
+            <a href="service-coordination.html" class="pro-card">
+                <div>
+                    <div style="font-size: 32px; margin-bottom: 12px;">🩺</div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Service Coordination & OPD Hub</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Tap-grid doctor availability schedule, emergency appointment bump service, no-show auto-release, walk-in token desk, live OPD queue screen.
+                    </p>
+                </div>
+                <div style="margin-top: 18px; font-weight: 700; color: var(--teal); font-size: 13px;">Launch OPD Hub &rarr;</div>
+            </a>
+
+            <!-- Module 3: Blood Locator -->
+            <a href="blood-integration.html" class="pro-card">
+                <div>
+                    <div style="font-size: 32px; margin-bottom: 12px;">🩸</div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Blood Locator & Shortage Analytics</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Stock inventory first, PostGIS nearby donor search second. Reliability score formula (0.5 response + 0.3 fulfilment + 0.2 recency), 90-day cool-down checks.
+                    </p>
+                </div>
+                <div style="margin-top: 18px; font-weight: 700; color: var(--teal); font-size: 13px;">Open Blood Locator &rarr;</div>
+            </a>
+
+            <!-- Module 4: Integration Hub & FHIR -->
+            <a href="blood-integration.html#feed" class="pro-card" onclick="sessionStorage.setItem('openTab', 'feed')">
+                <div>
+                    <div style="font-size: 32px; margin-bottom: 12px;">🔌</div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Integration Hub & FHIR Gateway</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Hospital onboarding with SHA-256 API keys, authenticated FHIR endpoint (Location, Observation, Patient), CSV import studio with preview, webhook outbox.
+                    </p>
+                </div>
+                <div style="margin-top: 18px; font-weight: 700; color: var(--teal); font-size: 13px;">Open Integration Hub &rarr;</div>
+            </a>
+
+            <!-- Module 5: SMS Sandbox Inbox -->
+            <a href="blood-integration.html#sms" class="pro-card" onclick="sessionStorage.setItem('openTab', 'sms')">
+                <div>
+                    <div style="font-size: 32px; margin-bottom: 12px;">📱</div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">SMS Simulator Inbox & Adapters</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Virtual SMS sandbox inbox, WhatsApp wa.me prefilled links audit outbox, Telegram bot adapter behind dynamic toggle flag.
+                    </p>
+                </div>
+                <div style="margin-top: 18px; font-weight: 700; color: var(--teal); font-size: 13px;">View SMS Inbox &rarr;</div>
+            </a>
+
+            <!-- Module 6: Camps & RSVPs -->
+            <a href="blood-integration.html#camps" class="pro-card" onclick="sessionStorage.setItem('openTab', 'camps')">
+                <div>
+                    <div style="font-size: 32px; margin-bottom: 12px;">🎪</div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Donation Camp Calendar</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Schedule and manage voluntary blood donation camps across Yavatmal district with citizen RSVP confirmations.
+                    </p>
+                </div>
+                <div style="margin-top: 18px; font-weight: 700; color: var(--teal); font-size: 13px;">View Camps &rarr;</div>
+            </a>
+        </div>
+    </main>
+
+    <!-- Emergency Modal -->
+    <div id="modal-emergency" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-emergency')">&times;</button>
+            <div style="font-size: 48px; margin-bottom: 12px;">🚨</div>
+            <h2 style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--red); margin-bottom: 8px;">
+                Emergency Assistance
+            </h2>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                Connecting you to emergency medical coordination for Yavatmal District.
+            </p>
+
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; text-align: left;">
+                <div style="font-size: 11px; text-transform: uppercase; color: var(--teal); font-weight: 700;">Nearest Hospital with Available ICU Bed:</div>
+                <div style="font-size: 16px; font-weight: 700; color: #fff; margin: 4px 0;">Yavatmal District General Hospital</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Civil Lines, Yavatmal &bull; Distance: ~2.4 km</div>
+                <div style="margin-top: 8px; display: flex; gap: 8px;">
+                    <span class="badge" style="background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3);">4 ICU Beds Open</span>
+                    <span class="badge" style="background: rgba(20,184,166,0.15); color: var(--teal); border: 1px solid rgba(20,184,166,0.3);">Oxygen 98%</span>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="tel:108" class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 14px; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px; box-shadow: 0 0 20px var(--red-glow);">
+                    📞 Call 108 Ambulance (Free Emergency)
+                </a>
+                <a href="blood-integration.html#request" class="btn" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 12px; font-size: 14px; text-decoration: none; border-radius: 12px;">
+                    🩸 Request Emergency Blood
+                </a>
+                <button class="btn" style="background: transparent; color: var(--text-muted); font-size: 12px;" onclick="closeModal('modal-emergency')">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Card Modal -->
+    <div id="modal-health-card" class="modal-overlay">
+        <div class="modal-box" style="border-color: var(--teal); box-shadow: 0 0 40px var(--teal-glow);">
+            <button class="modal-close" onclick="closeModal('modal-health-card')">&times;</button>
+            <div style="font-size: 36px; margin-bottom: 8px;">💳</div>
+            <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 4px;">
+                Digital Health Card
+            </h2>
+            <div style="font-size: 12px; color: var(--teal-light); margin-bottom: 20px;">SanjeevaniGrid Citizen Identity</div>
+
+            <div style="background: linear-gradient(135deg, #111827, #1f293d); border: 1px solid var(--border); border-radius: 18px; padding: 20px; text-align: left; position: relative; overflow: hidden; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--teal); font-weight: 700;">MAHARASHTRA HEALTH CARD</div>
+                        <div style="font-family: var(--font-display); font-size: 19px; font-weight: 800; color: #fff;">Ramesh Patil</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Age: 42 &bull; Male &bull; Yavatmal</div>
+                    </div>
+                    <div style="background: white; padding: 6px; border-radius: 8px; width: 68px; height: 68px; display: flex; align-items: center; justify-content: center;">
+                        <!-- QR Mock SVG -->
+                        <svg viewBox="0 0 24 24" width="56" height="56" fill="black">
+                            <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 0h4v4h-4v-4zm-4 4h4v4h-4v-4zm0-4h4v4h-4v-4zm4-4h4v4h-4v-4z"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+                    <div><strong>Blood Group:</strong> <span style="color: var(--red); font-weight: 700;">O+</span></div>
+                    <div><strong>Health ID:</strong> <code>SG-YTL-982210</code></div>
+                    <div><strong>Emergency:</strong> +919822100001</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="closeModal('modal-health-card')" style="width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>SanjeevaniGrid &copy; 2026 &bull; Integrated Healthcare Coordination & Crisis Resource Platform</div>
+        <div style="margin-top: 4px; color: var(--text-muted);">Pilot: Yavatmal District, Maharashtra &bull; Built with Spring Boot 3, PostGIS, and React Aesthetics</div>
+    </footer>
+
+    <!-- Script -->
+    <script>
+        function setMode(mode) {
+            const btnSimple = document.getElementById('btn-mode-simple');
+            const btnPro = document.getElementById('btn-mode-pro');
+            const gridSimple = document.getElementById('simple-mode-grid');
+            const gridPro = document.getElementById('pro-mode-grid');
+
+            if (mode === 'simple') {
+                btnSimple.classList.add('active');
+                btnPro.classList.remove('active');
+                gridSimple.style.display = 'grid';
+                gridPro.style.display = 'none';
+            } else {
+                btnSimple.classList.remove('active');
+                btnPro.classList.add('active');
+                gridSimple.style.display = 'none';
+                gridPro.style.display = 'grid';
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function openEmergencyModal() { openModal('modal-emergency'); }
+        function openHealthCardModal() { openModal('modal-health-card'); }
+
+        const translations = {
+            en: {
+                sandbox: "SANDBOX MODE",
+                heroTitle: "Healthcare Access & Crisis Coordination",
+                heroDesc: "Empowering rural citizens, doctors, blood banks, and crisis coordinators through an integrated, low-latency health network.",
+                modeSimple: "🌟 Citizen Mode (Simple)",
+                modePro: "💼 Staff & Admin Mode (Pro)",
+                bookDoctor: "Book Doctor",
+                bookDoctorSub: "One-question appointment wizard, live OPD token tracking, and wait time prediction.",
+                findBlood: "Find Blood",
+                findBloodSub: "Stock check first, nearby voluntary donors second with one-tap WhatsApp alert.",
+                emergency: "Emergency Help",
+                emergencySub: "Nearest hospital with open bed, one-tap 108 ambulance call, share emergency GPS location.",
+                healthCard: "My Health Card",
+                healthCardSub: "Digital QR Health ID card with emergency medical contacts and blood type."
+            },
+            hi: {
+                sandbox: "सैंडबॉक्स मोड",
+                heroTitle: "स्वास्थ्य सेवा पहुंच एवं संकट समन्वय",
+                heroDesc: "एकीकृत स्वास्थ्य नेटवर्क के माध्यम से ग्रामीण नागरिकों, डॉक्टरों और रक्तदाताओं को सशक्त बनाना।",
+                modeSimple: "🌟 नागरिक मोड (सरल)",
+                modePro: "💼 अस्पताल व प्रशासनिक मोड (प्रो)",
+                bookDoctor: "डॉक्टर अपॉइंटमेंट",
+                bookDoctorSub: "सरल अपॉइंटमेंट विज़ार्ड, लाइव ओपीडी टोकन और प्रतीक्षा समय।",
+                findBlood: "रक्त खोजें (ब्लड लोकेटर)",
+                findBloodSub: "पहले अस्पताल का स्टॉक, फिर पास के रक्तदाताओं को व्हाट्सएप और एसएमएस अलर्ट।",
+                emergency: "आपातकालीन सहायता",
+                emergencySub: "उपलब्ध आईसीयू बेड वाला नजदीकी अस्पताल, 108 एम्बुलेंस और आपातकालीन कॉल।",
+                healthCard: "मेरा स्वास्थ्य कार्ड",
+                healthCardSub: "डिजिटल क्यूआर स्वास्थ्य कार्ड, आपातकालीन संपर्क और रक्त समूह।"
+            },
+            mr: {
+                sandbox: "सँडबॉक्स मोड",
+                heroTitle: "आरोग्यसेवा समन्वय आणि संकट निवारण",
+                heroDesc: "ग्रामीण नागरिक, डॉक्टर आणि रक्तपेढ्या यांना जोडणारे एकात्मिक आरोग्य व्यासपीठ.",
+                modeSimple: "🌟 नागरिक मोड (सोपे)",
+                modePro: "💼 कर्मचारी व प्रशासन मोड (प्रो)",
+                bookDoctor: "डॉक्टर अपॉइंटमेंट",
+                bookDoctorSub: "एका प्रश्नाचे बुकिंग विझार्ड, थेट ओपीडी टोकन आणि अंदाजित वेळ.",
+                findBlood: "रक्त शोधा (ब्लड लोकेटर)",
+                findBloodSub: "आधी रुग्णालयाचा साठा, नंतर जवळच्या रक्तदात्यांना व्हॉट्सअ‍ॅप अलर्ट.",
+                emergency: "तातडीची मदत (इमर्जन्सी)",
+                emergencySub: "उपलब्ध खाटांचे जवळचे रुग्णालय, 108 रुग्णवाहिका आणि थेट मदत.",
+                healthCard: "माझे आरोग्य कार्ड",
+                healthCardSub: "डिजिटल क्यूआर ओळखपत्र, रक्तगट आणि आपत्कालीन संपर्क."
+            }
+        };
+
+        function setLanguage(lang) {
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.toLowerCase().startsWith(lang) || (lang === 'hi' && b.innerText.includes('हिंदी')) || (lang === 'mr' && b.innerText.includes('मराठी')));
+            });
+
+            const t = translations[lang] || translations.en;
+            document.getElementById('txt-sandbox').innerText = t.sandbox;
+            document.getElementById('txt-hero-title').innerText = t.heroTitle;
+            document.getElementById('txt-hero-desc').innerText = t.heroDesc;
+            document.getElementById('txt-mode-simple').innerText = t.modeSimple;
+            document.getElementById('txt-mode-pro').innerText = t.modePro;
+            document.getElementById('tile-book-doctor').innerText = t.bookDoctor;
+            document.getElementById('tile-book-doctor-sub').innerText = t.bookDoctorSub;
+            document.getElementById('tile-find-blood').innerText = t.findBlood;
+            document.getElementById('tile-find-blood-sub').innerText = t.findBloodSub;
+            document.getElementById('tile-emergency').innerText = t.emergency;
+            document.getElementById('tile-emergency-sub').innerText = t.emergencySub;
+            document.getElementById('tile-health-card').innerText = t.healthCard;
+            document.getElementById('tile-health-card-sub').innerText = t.healthCardSub;
+        }
+    </script>
+</body>
+</html>

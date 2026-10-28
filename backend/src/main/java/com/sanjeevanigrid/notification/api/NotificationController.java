@@ -17,11 +17,17 @@ public class NotificationController {
 
     private final NotificationRepository notificationRepo;
     private final SmsSandboxAdapter smsSandbox;
+    private final com.sanjeevanigrid.notification.infra.WhatsAppLinkAdapter whatsAppAdapter;
+    private final com.sanjeevanigrid.notification.infra.TelegramAdapter telegramAdapter;
 
     public NotificationController(NotificationRepository notificationRepo,
-                                  SmsSandboxAdapter smsSandbox) {
+                                  SmsSandboxAdapter smsSandbox,
+                                  com.sanjeevanigrid.notification.infra.WhatsAppLinkAdapter whatsAppAdapter,
+                                  com.sanjeevanigrid.notification.infra.TelegramAdapter telegramAdapter) {
         this.notificationRepo = notificationRepo;
         this.smsSandbox = smsSandbox;
+        this.whatsAppAdapter = whatsAppAdapter;
+        this.telegramAdapter = telegramAdapter;
     }
 
     /**
@@ -73,5 +79,50 @@ public class NotificationController {
     @GetMapping("/sms-inbox/{phone}")
     public ResponseEntity<List<SmsSandboxAdapter.SmsMessage>> getSmsInboxForPhone(@PathVariable String phone) {
         return ResponseEntity.ok(smsSandbox.getInboxForPhone(phone));
+    }
+
+    /**
+     * Clear all messages in SMS sandbox inbox.
+     */
+    @DeleteMapping("/sms-inbox")
+    public ResponseEntity<Map<String, String>> clearSmsInbox() {
+        smsSandbox.clearInbox();
+        return ResponseEntity.ok(Map.of("message", "SMS Inbox cleared"));
+    }
+
+    /**
+     * Simulate an incoming SMS reply from a donor or patient.
+     */
+    @PostMapping("/sms-inbox/simulate-reply")
+    public ResponseEntity<Map<String, Object>> simulateReply(@RequestBody Map<String, String> body) {
+        String phone = body.getOrDefault("phone", "+919822100001");
+        String message = body.getOrDefault("message", "YES, I am available to donate blood immediately.");
+        smsSandbox.sendSms(phone, "[INCOMING REPLY] " + message);
+        return ResponseEntity.ok(Map.of("status", "RECEIVED", "phone", phone, "reply", message));
+    }
+
+    // ==================== WhatsApp & Telegram Outbox (Demo Inspection) ====================
+
+    @GetMapping("/whatsapp-outbox")
+    public ResponseEntity<List<com.sanjeevanigrid.notification.infra.WhatsAppLinkAdapter.WhatsAppDispatch>> getWhatsAppOutbox() {
+        return ResponseEntity.ok(whatsAppAdapter.getOutbox());
+    }
+
+    @GetMapping("/telegram-status")
+    public ResponseEntity<Map<String, Object>> getTelegramStatus() {
+        return ResponseEntity.ok(Map.of(
+                "enabled", telegramAdapter.isEnabled(),
+                "channel", telegramAdapter.getChannel(),
+                "dispatches", telegramAdapter.getDispatches()
+        ));
+    }
+
+    @PostMapping("/telegram-toggle")
+    public ResponseEntity<Map<String, Object>> toggleTelegram(@RequestParam boolean enabled) {
+        telegramAdapter.setEnabled(enabled);
+        return ResponseEntity.ok(Map.of(
+                "enabled", telegramAdapter.isEnabled(),
+                "message", "Telegram adapter enabled status updated"
+        ));
     }
 }

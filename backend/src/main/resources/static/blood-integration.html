@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanjeevaniGrid — Blood Locator & Integration Hub</title>
+    <meta name="description" content="SanjeevaniGrid Blood Locator & Integration Hub: PostGIS Donor Search, Reliability Scoring, WhatsApp & Telegram Alerts, SMS Simulator Inbox, Hospital Onboarding, FHIR Feed, CSV Import Studio, and Shortage Analytics.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1e2840;
+            --border: #2a3654;
+            --border-light: rgba(42, 54, 84, 0.6);
+            --text-primary: #e8ecf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --teal: #14b8a6;
+            --teal-light: #2dd4bf;
+            --teal-dark: #0d9488;
+            --teal-glow: rgba(20, 184, 166, 0.2);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.25);
+            --orange: #f59e0b;
+            --orange-glow: rgba(245, 158, 11, 0.2);
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.2);
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.2);
+            --purple: #8b5cf6;
+            --whatsapp-green: #25D366;
+            --whatsapp-glow: rgba(37, 211, 102, 0.25);
+            --telegram-blue: #0088cc;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+            --font-base: 'Inter', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-base);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 15% 15%, rgba(239,68,68,0.06) 0%, transparent 45%),
+                        radial-gradient(ellipse at 85% 85%, rgba(20,184,166,0.06) 0%, transparent 45%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .header-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--red), var(--orange));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 0 16px var(--red-glow);
+        }
+
+        .header-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sandbox-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--orange);
+            letter-spacing: 0.03em;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--orange);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .lang-btn {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active, .lang-btn:hover {
+            background: var(--teal-dark);
+            color: #fff;
+            border-color: var(--teal);
+        }
+
+        .nav-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .nav-link-btn:hover {
+            border-color: var(--teal);
+            transform: translateY(-1px);
+        }
+
+        .btn-emergency-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 16px var(--red-glow);
+            transition: all 0.2s;
+        }
+        .btn-emergency-top:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 24px var(--red-glow);
+        }
+
+        /* Navigation Tabs Bar */
+        .nav-tabs-bar {
+            display: flex;
+            overflow-x: auto;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 4px 20px;
+            gap: 6px;
+            position: sticky;
+            top: 63px;
+            z-index: 90;
+        }
+        .nav-tabs-bar::-webkit-scrollbar { height: 4px; }
+        .nav-tabs-bar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .nav-tab.active {
+            color: #fff;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 24px 20px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Banner alert */
+        .info-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(20, 184, 166, 0.08);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            border-radius: var(--radius);
+            padding: 12px 20px;
+            margin-bottom: 24px;
+        }
+        .info-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .info-banner-tag {
+            background: var(--teal-dark);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        /* Grid Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .metric-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--teal), transparent);
+        }
+        .metric-card.critical::after { background: linear-gradient(90deg, var(--red), transparent); }
+        .metric-card.warning::after { background: linear-gradient(90deg, var(--orange), transparent); }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .metric-value {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        .metric-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Section Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form Controls */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .form-control {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        .form-control:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 2px var(--teal-glow);
+        }
+        textarea.form-control {
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+            color: white;
+            box-shadow: 0 0 14px var(--teal-glow);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 20px var(--teal-glow);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--red), #dc2626);
+            color: white;
+            box-shadow: 0 0 14px var(--red-glow);
+        }
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 20px var(--red-glow);
+        }
+        .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-light);
+        }
+        .btn-whatsapp {
+            background: #25D366;
+            color: #000;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 0 12px var(--whatsapp-glow);
+        }
+        .btn-whatsapp:hover {
+            background: #22bf5b;
+            transform: translateY(-1px);
+        }
+
+        /* Tables */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+        th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 12px 14px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-red { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-orange { background: rgba(245, 158, 11, 0.15); color: var(--orange); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-green { background: rgba(34, 197, 94, 0.15); color: var(--green); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--blue); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--purple); border: 1px solid rgba(139, 92, 246, 0.3); }
+
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #374151; transition: .3s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--teal); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Result Alert Container */
+        .alert-result-box {
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Code block */
+        .code-box {
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: #7dd3fc;
+            overflow-x: auto;
+            max-height: 280px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            max-width: 580px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 18px; right: 18px;
+            background: none; border: none;
+            color: var(--text-muted);
+            font-size: 20px; cursor: pointer;
+        }
+        .modal-close:hover { color: #fff; }
+
+        /* Tab Content switching */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.2s ease-in; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-actions { flex-wrap: wrap; }
+            .nav-tabs-bar { padding: 4px 10px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="header-brand">
+            <div class="header-logo">🩸</div>
+            <div>
+                <div class="header-title">SanjeevaniGrid</div>
+                <div class="header-subtitle">Blood Locator & Integration Hub</div>
+            </div>
+        </a>
+
+        <div class="header-actions">
+            <div class="sandbox-pill">
+                <div class="pulse-dot"></div>
+                <span id="txt-sandbox-mode">SANDBOX MODE</span>
+            </div>
+
+            <!-- Language Buttons -->
+            <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" onclick="setLanguage('hi')">हिंदी</button>
+            <button class="lang-btn" onclick="setLanguage('mr')">मराठी</button>
+
+            <!-- Cross Navigation Links -->
+            <a href="simulator.html" class="nav-link-btn">
+                <span>🌊 Crisis Simulator</span>
+            </a>
+            <a href="service-coordination.html" class="nav-link-btn">
+                <span>🩺 OPD Coordination</span>
+            </a>
+
+            <!-- Always visible Emergency button -->
+            <button class="btn-emergency-top" onclick="quickEmergencyBloodAlert()">
+                <span>🚨 EMERGENCY BLOOD</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="nav-tabs-bar">
+        <div class="nav-tab active" id="tab-btn-stocks" onclick="switchTab('stocks')">
+            <span>🩸</span> <span id="txt-tab-stocks">Blood Stocks</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-request" onclick="switchTab('request')">
+            <span>🚨</span> <span id="txt-tab-request">Request Blood (Stock 1st, Donors 2nd)</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-donors" onclick="switchTab('donors')">
+            <span>👥</span> <span id="txt-tab-donors">Donor Registry & Reliability</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-camps" onclick="switchTab('camps')">
+            <span>🎪</span> <span id="txt-tab-camps">Donation Camps & RSVP</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-analytics" onclick="switchTab('analytics')">
+            <span>📊</span> <span id="txt-tab-analytics">Shortage Analytics</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-onboarding" onclick="switchTab('onboarding')">
+            <span>🏥</span> <span id="txt-tab-onboarding">Hospital Onboarding</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-feed" onclick="switchTab('feed')">
+            <span>🔌</span> <span id="txt-tab-feed">API-Key Feed (FHIR)</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-csv" onclick="switchTab('csv')">
+            <span>📄</span> <span id="txt-tab-csv">CSV Import Studio</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-simulated" onclick="switchTab('simulated')">
+            <span>⚡</span> <span id="txt-tab-simulated">Simulated Feed & Webhooks</span>
+        </div>
+        <div class="nav-tab" id="tab-btn-sms" onclick="switchTab('sms')">
+            <span>📱</span> <span id="txt-tab-sms">SMS Inbox & Adapters</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-container">
+
+        <!-- Top District Info Banner -->
+        <div class="info-banner">
+            <div class="info-banner-left">
+                <span class="info-banner-tag">PILOT DISTRICT</span>
+                <span><strong>Yavatmal District, Maharashtra</strong> — Connected to <strong>Yavatmal District General Hospital</strong> and <strong>Pusad SDH</strong></span>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="refreshAllData()" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh Live Data</button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 1: BLOOD STOCKS -->
+        <!-- ============================================================ -->
+        <section id="tab-content-stocks" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="metric-card" id="card-total-units">
+                    <div class="metric-label">Total Units Available</div>
+                    <div class="metric-value"><span id="metric-total-stock">--</span> <span style="font-size: 14px; color: var(--text-muted);">units</span></div>
+                    <div class="metric-sub" id="metric-hosp-name">Yavatmal District General Hospital</div>
+                </div>
+                <div class="metric-card critical">
+                    <div class="metric-label">Critical Shortage Groups</div>
+                    <div class="metric-value" style="color: var(--red);"><span id="metric-critical-count">--</span> <span style="font-size: 14px; color: var(--red);">groups</span></div>
+                    <div class="metric-sub">Units &le; 2 (Immediate donor alert recommended)</div>
+                </div>
+                <div class="metric-card warning">
+                    <div class="metric-label">Expiring in &le; 14 Days</div>
+                    <div class="metric-value" style="color: var(--orange);"><span id="metric-expiring-count">--</span> <span style="font-size: 14px; color: var(--orange);">units</span></div>
+                    <div class="metric-sub">Prioritize for urgent or scheduled transfusions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">District Health Score</div>
+                    <div class="metric-value" style="color: var(--teal);"><span id="metric-health-score">--%</span></div>
+                    <div class="metric-sub">Based on minimum safe buffer levels</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🩸 Current Blood Bank Inventory</div>
+                    <div class="card-actions">
+                        <select id="select-stock-hospital" class="form-control" style="width: 280px;" onchange="loadBloodStocks()">
+                            <option value="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d">Yavatmal District General Hospital</option>
+                            <option value="b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e">Pusad Sub-District Hospital</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="openUpdateStockModal()">+ Update / Replenish</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="table-blood-stocks">
+                        <thead>
+                            <tr>
+                                <th>Blood Group</th>
+                                <th>Units Available</th>
+                                <th>Reserved</th>
+                                <th>Expiry Date</th>
+                                <th>Low Stock Threshold</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-blood-stocks">
+                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading inventory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 2: REQUEST BLOOD (Stock First, Donors Second) -->
+        <!-- ============================================================ -->
+        <section id="tab-content-request" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">🚨 Emergency & Urgent Blood Request Wizard</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            <strong>Rule: Stock First, Donors Second.</strong> The system checks hospital stock first. If insufficient, it immediately triggers a PostGIS spatial search for nearby eligible donors, ranks them by reliability score, and generates one-tap WhatsApp links and SMS alerts.
+                        </div>
+                    </div>
+                </div>
+
+                <form id="form-blood-request" onsubmit="handleBloodRequestSubmit(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Hospital</label>
+                            <select id="req-hospital-id" class="form-control" required>
+                                <option value="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d">Yavatmal District General Hospital</option>
+                                <option value="b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e">Pusad Sub-District Hospital</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Patient Full Name</label>
+                            <input type="text" id="req-patient-name" class="form-control" placeholder="e.g. Ramesh Patil" required value="Sunita Chavan">
+                        </div>
+                        <div class="form-group">
+                            <label>Patient Contact Phone</label>
+                            <input type="text" id="req-patient-phone" class="form-control" placeholder="+919822100099" value="+919822100099">
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Group Required</label>
+                            <select id="req-blood-group" class="form-control" required>
+                                <option value="O_NEGATIVE" selected>O- (Universal Red Cell / Critical Shortage)</option>
+                                <option value="AB_NEGATIVE">AB- (Critical Shortage)</option>
+                                <option value="A_POSITIVE">A+</option>
+                                <option value="A_NEGATIVE">A-</option>
+                                <option value="B_POSITIVE">B+</option>
+                                <option value="B_NEGATIVE">B-</option>
+                                <option value="AB_POSITIVE">AB+ (Universal Recipient)</option>
+                                <option value="O_POSITIVE">O+</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Units Needed</label>
+                            <input type="number" id="req-units-needed" class="form-control" min="1" max="10" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Urgency Level</label>
+                            <select id="req-urgency" class="form-control" required>
+                                <option value="CRITICAL_EMERGENCY" selected>🚨 CRITICAL EMERGENCY (Immediate Donor Search)</option>
+                                <option value="URGENT">⚡ URGENT (Within 2 Hours)</option>
+                                <option value="NORMAL">ROUTINE (Planned Transfusion)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>PostGIS Donor Radius</label>
+                            <select id="req-radius" class="form-control">
+                                <option value="15">Within 15 km (Local Yavatmal)</option>
+                                <option value="35" selected>Within 35 km (Taluka & District)</option>
+                                <option value="50">Within 50 km (Extended District)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <button type="submit" class="btn btn-danger" style="padding: 12px 24px; font-size: 14px;">
+                            <span>🩸 Execute Blood Allocation ("Stock First, Donors Second")</span>
+                        </button>
+                        <span id="req-spinner" style="display: none; color: var(--teal);">⚡ Searching stock & PostGIS donors...</span>
+                    </div>
+                </form>
+
+                <!-- Allocation Result Display -->
+                <div id="allocation-result-container" style="display: none;"></div>
+            </div>
+
+            <!-- Recent Requests Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 Recent Blood Requests Audit Log</div>
+                    <button class="btn btn-secondary" onclick="loadRecentBloodRequests()">🔄 Refresh</button>
+                </div>
+                <div class="table-container">
+                    <table id="table-recent-requests">
+                        <thead>
+                            <tr>
+                                <th>Request Number</th>
+                                <th>Patient Name</th>
+                                <th>Blood Group</th>
+                                <th>Needed</th>
+                                <th>From Stock</th>
+                                <th>Donors Alerted</th>
+                                <th>Urgency</th>
+                                <th>Status</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-recent-requests">
+                            <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">No requests lodged yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 3: DONOR REGISTRY & RELIABILITY -->
+        <!-- ============================================================ -->
+        <section id="tab-content-donors" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">👥 Blood Donor Registry & Reliability Scoring</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            Reliability Score Formula: <code>0.5 &times; response_rate + 0.3 &times; fulfilment_rate + 0.2 &times; recency</code>.
+                            Eligibility Cool-down: 90 days required between whole blood donations.
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="openRegisterDonorModal()">+ Register New Donor</button>
+                </div>
+
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+                    <select id="filter-donor-group" class="form-control" style="width: 180px;" onchange="loadDonors()">
+                        <option value="">All Blood Groups</option>
+                        <option value="O_NEGATIVE">O-</option>
+                        <option value="O_POSITIVE">O+</option>
+                        <option value="A_POSITIVE">A+</option>
+                        <option value="A_NEGATIVE">A-</option>
+                        <option value="B_POSITIVE">B+</option>
+                        <option value="B_NEGATIVE">B-</option>
+                        <option value="AB_POSITIVE">AB+</option>
+                        <option value="AB_NEGATIVE">AB-</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table id="table-donors">
+                        <thead>
+                            <tr>
+                                <th>Donor Name</th>
+                                <th>Phone</th>
+                                <th>Group</th>
+                                <th>Location (Lat/Lon)</th>
+                                <th>Address / District</th>
+                                <th>Available (Toggle)</th>
+                                <th>Consent (Toggle)</th>
+                                <th>Cool-down Status</th>
+                                <th>Reliability Score</th>
+                                <th>Alert Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-donors">
+                            <tr><td colspan="10" style="text-align: center; color: var(--text-muted);">Loading donors...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 4: DONATION CAMPS & RSVP -->
+        <!-- ============================================================ -->
+        <section id="tab-content-camps" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🎪 Blood Donation Camp Calendar (Yavatmal District)</div>
+                    <button class="btn btn-primary" onclick="openCreateCampModal()">+ Schedule New Camp</button>
+                </div>
+                <div id="camps-cards-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 5: SHORTAGE ANALYTICS -->
+        <!-- ============================================================ -->
+        <section id="tab-content-analytics" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📊 District Blood Shortage Analytics & Forecasting</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            Evaluating units available against target safe buffer (10 units per group) and tracking expiry risks.
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadShortageAnalytics()">🔄 Refresh</button>
+                </div>
+
+                <!-- Recommendations Box -->
+                <div id="analytics-recommendations" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 20px;">
+                    <div style="font-weight: 700; color: var(--orange); margin-bottom: 6px;">💡 Rule-Based Strategic Recommendations:</div>
+                    <ul id="list-recommendations" style="padding-left: 20px; font-size: 13px; color: var(--text-primary); line-height: 1.6;"></ul>
+                </div>
+
+                <div class="table-container">
+                    <table id="table-analytics">
+                        <thead>
+                            <tr>
+                                <th>Blood Group</th>
+                                <th>Units in Stock</th>
+                                <th>Units Reserved</th>
+                                <th>Safe Buffer Target</th>
+                                <th>Deficit / Surplus</th>
+                                <th>Expiring (&le;7d)</th>
+                                <th>Expiring (&le;14d)</th>
+                                <th>Estimated Supply</th>
+                                <th>Shortage Risk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-analytics"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 6: HOSPITAL ONBOARDING PORTAL -->
+        <!-- ============================================================ -->
+        <section id="tab-content-onboarding" class="tab-content">
+            <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px;">
+                <!-- Hospital Self-Registration Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🏥 Hospital Self-Registration</div>
+                    </div>
+                    <form id="form-hospital-register" onsubmit="handleHospitalRegister(event)">
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>Hospital Name</label>
+                            <input type="text" id="onboard-name" class="form-control" placeholder="e.g. Darwha Rural Hospital" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>Licence / Registration Number</label>
+                            <input type="text" id="onboard-licence" class="form-control" placeholder="e.g. MH-YTL-HOSP-2026-089" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>Address</label>
+                            <input type="text" id="onboard-address" class="form-control" placeholder="e.g. Station Road, Darwha, Yavatmal" required>
+                        </div>
+                        <div class="form-grid" style="margin-bottom: 12px;">
+                            <div class="form-group">
+                                <label>District</label>
+                                <input type="text" id="onboard-district" class="form-control" value="Yavatmal" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="text" id="onboard-phone" class="form-control" placeholder="+917238240000" required>
+                            </div>
+                        </div>
+                        <div class="form-grid" style="margin-bottom: 16px;">
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input type="number" step="any" id="onboard-lat" class="form-control" value="20.3160" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input type="number" step="any" id="onboard-lon" class="form-control" value="77.7680" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <span>Submit Hospital Onboarding Request</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Admin Verification Portal -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🛡️ Admin Verification & API Key Provisioning</div>
+                        <button class="btn btn-secondary" onclick="loadHospitals()">🔄 Refresh</button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+                        When Platform Admin approves a hospital, an API key (prefixed with <code>sg_live_</code>) is cryptographically generated. The raw key is revealed ONCE and hashed with SHA-256 for persistent database storage.
+                    </div>
+                    <div class="table-container">
+                        <table id="table-hospitals">
+                            <thead>
+                                <tr>
+                                    <th>Hospital Name</th>
+                                    <th>Licence</th>
+                                    <th>District</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-hospitals">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading hospitals...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 7: API-KEY FEED ENDPOINT TESTER (FHIR) -->
+        <!-- ============================================================ -->
+        <section id="tab-content-feed" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">🔌 Automated EHR Feed Endpoint Tester (FHIR Standard)</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            Endpoint: <code>POST /api/feed/{hospitalId}</code> authenticated by <code>X-API-KEY</code> header. Supports <code>Location</code>, <code>Observation</code>, <code>Appointment</code>, <code>Patient</code>, and <code>Bundle</code>.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Target Hospital</label>
+                        <select id="feed-hospital-id" class="form-control" onchange="updateFeedEndpointUrl()">
+                            <option value="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d">Yavatmal District General Hospital (Seeded)</option>
+                            <option value="b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e">Pusad Sub-District Hospital (Seeded)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Header: X-API-KEY</label>
+                        <input type="text" id="feed-api-key" class="form-control" value="sg_live_demo_yavatmal_2026">
+                    </div>
+                    <div class="form-group">
+                        <label>FHIR Payload Template</label>
+                        <select id="feed-template-select" class="form-control" onchange="loadFhirPreset()">
+                            <option value="location">Location (Ward Bed Telemetry)</option>
+                            <option value="observation-blood" selected>Observation (Blood Bank Stock Update)</option>
+                            <option value="observation-o2">Observation (Ward Oxygen Level)</option>
+                            <option value="bundle">Bundle (Multi-resource Transaction)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Raw FHIR JSON Payload (<span id="feed-target-url-label">POST /api/feed/a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d</span>)</label>
+                    <textarea id="feed-payload-json" class="form-control" rows="10"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="sendFhirFeed()">
+                        <span>🚀 Send Authenticated FHIR Feed</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadFhirPreset()">Reset Template</button>
+                    <span id="feed-send-status" style="font-size: 13px; font-weight: 600;"></span>
+                </div>
+
+                <!-- Feed Result -->
+                <div id="feed-result-container" style="display: none;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">RESPONSE (FHIR OperationOutcome):</div>
+                    <div id="feed-response-json" class="code-box"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 8: CSV IMPORT STUDIO -->
+        <!-- ============================================================ -->
+        <section id="tab-content-csv" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">📄 CSV Import Studio with Column Mapping & Validation Preview</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            Upload or paste CSV. System auto-detects columns, performs schema validation row-by-row, and reports errors before committing to database.
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="loadSampleCsv('BLOOD_STOCK')">Load Blood Stock Sample</button>
+                        <button class="btn btn-secondary" onclick="loadSampleCsv('DONORS')">Load Donors Sample</button>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Target Entity Type</label>
+                        <select id="csv-entity-type" class="form-control" onchange="handleEntityTypeChange()">
+                            <option value="BLOOD_STOCK" selected>Blood Stock Inventory</option>
+                            <option value="DONORS">Donor Registry</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Hospital (for Blood Stock)</label>
+                        <select id="csv-hospital-id" class="form-control">
+                            <option value="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d">Yavatmal District General Hospital</option>
+                            <option value="b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e">Pusad Sub-District Hospital</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>CSV Content (Comma-separated)</label>
+                    <textarea id="csv-text-input" class="form-control" rows="8" placeholder="Paste CSV text here..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="previewCsv()">
+                        <span>🔍 Generate Validation Preview</span>
+                    </button>
+                    <button id="btn-commit-csv" class="btn btn-danger" style="display: none;" onclick="commitCsv()">
+                        <span>💾 Commit Valid Records to Database</span>
+                    </button>
+                </div>
+
+                <!-- Preview Output -->
+                <div id="csv-preview-container" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 9: SIMULATED FEED & WEBHOOK OUTBOX -->
+        <!-- ============================================================ -->
+        <section id="tab-content-simulated" class="tab-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <!-- Simulated Feed Controls -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⚡ Automated Telemetry Feed Simulator</div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+                        Simulates an automated hospital EHR and smart blood-bank telemetry device pushing live fluctuations (blood consumption, donation replenishment, oxygen saturation) into the system.
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>Hospital Target</label>
+                        <select id="sim-hospital-id" class="form-control">
+                            <option value="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d">Yavatmal District General Hospital</option>
+                            <option value="b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e">Pusad Sub-District Hospital</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="triggerSimulatedFeedCycle()" style="width: 100%; margin-bottom: 16px;">
+                        <span>🚀 Push Realistic Telemetry Update Cycle</span>
+                    </button>
+
+                    <div id="sim-feed-result" style="display: none; background: #090d16; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-size: 13px;"></div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px;">RECENT FEED INGESTION LOGS:</div>
+                        <div id="feed-logs-list" style="max-height: 220px; overflow-y: auto; font-size: 12px; color: var(--text-muted);">Loading logs...</div>
+                    </div>
+                </div>
+
+                <!-- Webhook Outbox -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">📡 Webhook Outbox</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">Subscribed EHR/EMS event stream</div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="loadWebhooks()">🔄 Refresh</button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+                        Domain events (<code>StockLow</code>, <code>SurgePredicted</code>, <code>BloodRequestCreated</code>) are queued here for outbound delivery.
+                    </div>
+                    <div class="table-container">
+                        <table id="table-webhooks">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Status</th>
+                                    <th>Attempts</th>
+                                    <th>Payload</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-webhooks">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No outgoing webhooks yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TAB 10: SMS INBOX & ADAPTERS (WHATSAPP & TELEGRAM) -->
+        <!-- ============================================================ -->
+        <section id="tab-content-sms" class="tab-content">
+            <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px;">
+                <!-- SMS Inbox -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">📱 SMS Simulator Inbox (Sandbox Mode)</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                In sandbox mode, all SMS alerts (OTPs, donor emergency alerts, appointment confirmations) are stored in this virtual inbox.
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary" onclick="openSimulateReplyModal()">+ Simulate Donor Reply</button>
+                            <button class="btn btn-danger" onclick="clearSmsInbox()" style="padding: 6px 12px; font-size: 12px;">Clear Inbox</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                        <input type="text" id="sms-search-input" class="form-control" placeholder="Search by phone number or keyword..." oninput="filterSmsInbox()">
+                    </div>
+
+                    <div id="sms-inbox-container" style="display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow-y: auto;">
+                        <!-- SMS messages rendered here -->
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">Loading SMS messages...</div>
+                    </div>
+                </div>
+
+                <!-- Adapters Inspection: WhatsApp & Telegram -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Telegram Adapter Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">✈️ Telegram Bot Adapter</div>
+                            <div class="badge badge-purple" id="badge-telegram-status">FLAG: DISABLED</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">
+                            Config flag: <code>app.telegram.enabled</code>. When disabled, emergency alerts gracefully skip Telegram dispatch without failing. You can toggle it live below for testing!
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-secondary); padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 14px;">
+                            <span style="font-weight: 600;">Enable Telegram Adapter</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-telegram-flag" onchange="handleTelegramFlagToggle(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted);" id="telegram-status-detail">Loading status...</div>
+                    </div>
+
+                    <!-- WhatsApp Outbox -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">💬 WhatsApp Link Adapter (wa.me)</div>
+                            <button class="btn btn-secondary" onclick="loadWhatsAppOutbox()" style="padding: 4px 10px; font-size: 11px;">Refresh</button>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+                            Generates direct <code>https://wa.me/{phone}?text={encoded}</code> clickable links for instant donor alert chats.
+                        </div>
+                        <div id="whatsapp-outbox-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+                            <!-- Rendered dynamically -->
+                            <div style="color: var(--text-muted); font-size: 12px;">No WhatsApp links generated yet.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ============================================================ -->
+    <!-- MODALS -->
+    <!-- ============================================================ -->
+
+    <!-- API Key Display Modal (Shown ONCE after admin approval) -->
+    <div id="modal-api-key" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-api-key')">&times;</button>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                <div style="font-size: 28px;">🔑</div>
+                <div>
+                    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700;">Hospital Verified & API Key Generated</h3>
+                    <div style="font-size: 12px; color: var(--text-secondary);" id="modal-key-hospital-name">Hospital Name</div>
+                </div>
+            </div>
+
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; font-size: 13px; color: var(--red);">
+                ⚠️ <strong>CRITICAL: Save this API Key now!</strong> For security, this key is hashed with SHA-256 and will NEVER be displayed again.
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>Raw API Key</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="display-raw-api-key" class="form-control" readonly style="font-family: monospace; font-weight: 700; color: var(--teal-light);">
+                    <button class="btn btn-primary" onclick="copyApiKeyToClipboard()">📋 Copy</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>Authorized Feed Endpoint</label>
+                <input type="text" id="display-feed-endpoint" class="form-control" readonly style="font-family: monospace; font-size: 12px; color: var(--text-muted);">
+            </div>
+
+            <button class="btn btn-secondary" onclick="closeModal('modal-api-key')" style="width: 100%;">I have securely saved this key</button>
+        </div>
+    </div>
+
+    <!-- Register Donor Modal -->
+    <div id="modal-register-donor" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-register-donor')">&times;</button>
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 16px;">🩸 Register as Voluntary Blood Donor</h3>
+            <form onsubmit="handleDonorRegister(event)">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Full Name</label>
+                    <input type="text" id="donor-reg-name" class="form-control" required placeholder="e.g. Anand Deshmukh">
+                </div>
+                <div class="form-grid" style="margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="donor-reg-phone" class="form-control" required placeholder="+919822100055">
+                    </div>
+                    <div class="form-group">
+                        <label>Blood Group</label>
+                        <select id="donor-reg-group" class="form-control" required>
+                            <option value="O_NEGATIVE">O- (Universal)</option>
+                            <option value="O_POSITIVE" selected>O+</option>
+                            <option value="A_POSITIVE">A+</option>
+                            <option value="A_NEGATIVE">A-</option>
+                            <option value="B_POSITIVE">B+</option>
+                            <option value="B_NEGATIVE">B-</option>
+                            <option value="AB_POSITIVE">AB+</option>
+                            <option value="AB_NEGATIVE">AB-</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Address / Taluka</label>
+                    <input type="text" id="donor-reg-address" class="form-control" placeholder="e.g. Shivaji Chowk, Digras, Yavatmal" required>
+                </div>
+                <div class="form-grid" style="margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label>Latitude</label>
+                        <input type="number" step="any" id="donor-reg-lat" class="form-control" value="20.3888" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Longitude</label>
+                        <input type="number" step="any" id="donor-reg-lon" class="form-control" value="78.1204" required>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                    <input type="checkbox" id="donor-reg-consent" checked>
+                    <label for="donor-reg-consent" style="font-size: 13px; color: var(--text-secondary);">I give consent to receive emergency blood alert notifications via SMS and WhatsApp.</label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Complete Donor Registration</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- RSVP Modal for Camps -->
+    <div id="modal-camp-rsvp" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-camp-rsvp')">&times;</button>
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 6px;">🎪 RSVP for Blood Donation Camp</h3>
+            <div id="rsvp-camp-title" style="font-size: 13px; color: var(--teal-light); margin-bottom: 16px;">Camp Title</div>
+            <form onsubmit="handleCampRsvpSubmit(event)">
+                <input type="hidden" id="rsvp-camp-id">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Your Full Name</label>
+                    <input type="text" id="rsvp-donor-name" class="form-control" required placeholder="e.g. Vijay Patil">
+                </div>
+                <div class="form-grid" style="margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="rsvp-donor-phone" class="form-control" required placeholder="+919822100088">
+                    </div>
+                    <div class="form-group">
+                        <label>Blood Group</label>
+                        <select id="rsvp-blood-group" class="form-control" required>
+                            <option value="O_POSITIVE" selected>O+</option>
+                            <option value="O_NEGATIVE">O-</option>
+                            <option value="A_POSITIVE">A+</option>
+                            <option value="A_NEGATIVE">A-</option>
+                            <option value="B_POSITIVE">B+</option>
+                            <option value="B_NEGATIVE">B-</option>
+                            <option value="AB_POSITIVE">AB+</option>
+                            <option value="AB_NEGATIVE">AB-</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Notes / Preferred Time Slot</label>
+                    <input type="text" id="rsvp-notes" class="form-control" placeholder="e.g. Morning 10 AM">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Confirm Camp RSVP</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Stock Modal -->
+    <div id="modal-update-stock" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-update-stock')">&times;</button>
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 16px;">🩸 Update / Replenish Blood Stock</h3>
+            <form onsubmit="handleUpdateStockSubmit(event)">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Hospital</label>
+                    <select id="stock-update-hospital" class="form-control" required>
+                        <option value="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d">Yavatmal District General Hospital</option>
+                        <option value="b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e">Pusad Sub-District Hospital</option>
+                    </select>
+                </div>
+                <div class="form-grid" style="margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label>Blood Group</label>
+                        <select id="stock-update-group" class="form-control" required>
+                            <option value="O_NEGATIVE">O-</option>
+                            <option value="O_POSITIVE">O+</option>
+                            <option value="A_POSITIVE">A+</option>
+                            <option value="A_NEGATIVE">A-</option>
+                            <option value="B_POSITIVE">B+</option>
+                            <option value="B_NEGATIVE">B-</option>
+                            <option value="AB_POSITIVE">AB+</option>
+                            <option value="AB_NEGATIVE">AB-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Available Units</label>
+                        <input type="number" id="stock-update-units" class="form-control" min="0" max="200" value="10" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Expiry Date</label>
+                    <input type="date" id="stock-update-expiry" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Inventory Update</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Simulate SMS Reply Modal -->
+    <div id="modal-sms-reply" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-sms-reply')">&times;</button>
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 16px;">💬 Simulate Incoming SMS Reply</h3>
+            <form onsubmit="handleSimulateSmsReply(event)">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Sender Phone (Donor / Patient)</label>
+                    <input type="text" id="sms-reply-phone" class="form-control" value="+919822100001" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Incoming SMS Text</label>
+                    <textarea id="sms-reply-text" class="form-control" rows="3" required>YES, I am available to donate blood immediately. On my way to hospital.</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Send Simulated SMS to Inbox</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const API_BASE = '/api';
+        const DEFAULT_HOSPITAL = 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d';
+        let currentSmsMessages = [];
+        let currentLanguage = 'en';
+
+        // Preload on start
+        document.addEventListener('DOMContentLoaded', () => {
+            initDates();
+            loadBloodStocks();
+            loadDonors();
+            loadCamps();
+            loadShortageAnalytics();
+            loadHospitals();
+            loadFhirPreset();
+            loadSmsInbox();
+            loadTelegramStatus();
+            loadWhatsAppOutbox();
+            loadRecentBloodRequests();
+            loadWebhooks();
+            loadFeedLogs();
+
+            // Periodic auto-refresh for SMS inbox and webhooks
+            setInterval(loadSmsInbox, 3000);
+            setInterval(loadWebhooks, 5000);
+        });
+
+        function initDates() {
+            const exp = new Date();
+            exp.setDate(exp.getDate() + 30);
+            document.getElementById('stock-update-expiry').value = exp.toISOString().split('T')[0];
+        }
+
+        // ==================== TABS SWITCHER ====================
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const btn = document.getElementById('tab-btn-' + tabName);
+            const content = document.getElementById('tab-content-' + tabName);
+            if (btn) btn.classList.add('active');
+            if (content) content.classList.add('active');
+        }
+
+        // ==================== MODALS ====================
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ==================== REFRESH ALL ====================
+        function refreshAllData() {
+            loadBloodStocks();
+            loadDonors();
+            loadCamps();
+            loadShortageAnalytics();
+            loadHospitals();
+            loadSmsInbox();
+            loadWebhooks();
+            loadFeedLogs();
+        }
+
+        // ==================== 1. BLOOD STOCKS ====================
+        async function loadBloodStocks() {
+            const hospId = document.getElementById('select-stock-hospital').value || DEFAULT_HOSPITAL;
+            try {
+                const res = await fetch(`${API_BASE}/blood/stocks?hospitalId=${hospId}`);
+                const stocks = await res.json();
+                renderBloodStocks(stocks);
+            } catch (err) {
+                console.error('Failed to load blood stocks:', err);
+            }
+        }
+
+        function renderBloodStocks(stocks) {
+            const tbody = document.getElementById('tbody-blood-stocks');
+            tbody.innerHTML = '';
+
+            let totalUnits = 0;
+            let criticalCount = 0;
+            let expiringCount = 0;
+
+            const now = new Date();
+            const in14Days = new Date();
+            in14Days.setDate(now.getDate() + 14);
+
+            stocks.forEach(s => {
+                totalUnits += s.unitsAvailable;
+                const expDate = new Date(s.expiryDate);
+                const isExpiring = (expDate >= now && expDate <= in14Days);
+                if (isExpiring) expiringCount += s.unitsAvailable;
+
+                let statusBadge = '';
+                if (s.unitsAvailable <= 2) {
+                    statusBadge = '<span class="badge badge-red">CRITICAL SHORTAGE</span>';
+                    criticalCount++;
+                } else if (s.unitsAvailable <= s.lowStockThreshold) {
+                    statusBadge = '<span class="badge badge-orange">LOW STOCK</span>';
+                } else {
+                    statusBadge = '<span class="badge badge-green">ADEQUATE</span>';
+                }
+
+                if (isExpiring) {
+                    statusBadge += ' <span class="badge badge-orange">EXPIRING SOON</span>';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong style="font-size: 14px; color: #fff;">${formatBloodGroup(s.bloodGroup)}</strong></td>
+                    <td><span style="font-size: 15px; font-weight: 700; color: ${s.unitsAvailable <= 2 ? 'var(--red)' : '#fff'};">${s.unitsAvailable}</span> units</td>
+                    <td>${s.unitsReserved} units</td>
+                    <td>${s.expiryDate}</td>
+                    <td>${s.lowStockThreshold} units</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="quickReplenish('${s.bloodGroup}')">+ Add Units</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('metric-total-stock').innerText = totalUnits;
+            document.getElementById('metric-critical-count').innerText = criticalCount;
+            document.getElementById('metric-expiring-count').innerText = expiringCount;
+        }
+
+        function openUpdateStockModal() {
+            openModal('modal-update-stock');
+        }
+
+        function quickReplenish(group) {
+            document.getElementById('stock-update-group').value = group;
+            openModal('modal-update-stock');
+        }
+
+        async function handleUpdateStockSubmit(e) {
+            e.preventDefault();
+            const hosp = document.getElementById('stock-update-hospital').value;
+            const bg = document.getElementById('stock-update-group').value;
+            const units = parseInt(document.getElementById('stock-update-units').value);
+            const exp = document.getElementById('stock-update-expiry').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/blood/stocks/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hospitalId: hosp, bloodGroup: bg, units: units, expiryDate: exp })
+                });
+                if (res.ok) {
+                    closeModal('modal-update-stock');
+                    loadBloodStocks();
+                    loadShortageAnalytics();
+                }
+            } catch (err) {
+                alert('Failed to update stock: ' + err);
+            }
+        }
+
+        // ==================== 2. REQUEST BLOOD (Stock First, Donors Second) ====================
+        async function handleBloodRequestSubmit(e) {
+            e.preventDefault();
+            const spinner = document.getElementById('req-spinner');
+            spinner.style.display = 'inline';
+
+            const hospId = document.getElementById('req-hospital-id').value;
+            const patientName = document.getElementById('req-patient-name').value;
+            const patientPhone = document.getElementById('req-patient-phone').value;
+            const bloodGroup = document.getElementById('req-blood-group').value;
+            const unitsNeeded = parseInt(document.getElementById('req-units-needed').value);
+            const urgency = document.getElementById('req-urgency').value;
+            const radiusKm = parseFloat(document.getElementById('req-radius').value);
+
+            try {
+                const res = await fetch(`${API_BASE}/blood/requests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        hospitalId: hospId,
+                        patientName: patientName,
+                        patientPhone: patientPhone,
+                        bloodGroup: bloodGroup,
+                        unitsNeeded: unitsNeeded,
+                        urgency: urgency,
+                        radiusKm: radiusKm
+                    })
+                });
+                const result = await res.json();
+                renderAllocationResult(result);
+                loadBloodStocks();
+                loadRecentBloodRequests();
+                loadSmsInbox();
+                loadWhatsAppOutbox();
+            } catch (err) {
+                alert('Request failed: ' + err);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
+        function renderAllocationResult(res) {
+            const container = document.getElementById('allocation-result-container');
+            container.style.display = 'block';
+
+            const isStockAllocated = res.unitsFromStock >= res.unitsRequested;
+            const isMixed = res.unitsFromStock > 0 && res.unitsFromStock < res.unitsRequested;
+
+            let badgeHtml = '';
+            let headerStyle = '';
+
+            if (isStockAllocated) {
+                badgeHtml = '<span class="badge badge-green">FULFILLED VIA INVENTORY (STOCK 1ST)</span>';
+                headerStyle = 'color: var(--green);';
+            } else if (isMixed) {
+                badgeHtml = '<span class="badge badge-orange">PARTIAL STOCK + DONORS ALERTED</span>';
+                headerStyle = 'color: var(--orange);';
+            } else {
+                badgeHtml = '<span class="badge badge-red">EMERGENCY DONOR ALERTS DISPATCHED (DONORS 2ND)</span>';
+                headerStyle = 'color: var(--red);';
+            }
+
+            let donorsHtml = '';
+            if (res.alertedDonors && res.alertedDonors.length > 0) {
+                donorsHtml = `
+                    <div style="margin-top: 16px;">
+                        <div style="font-weight: 700; color: #fff; margin-bottom: 8px;">
+                            🎯 Ranked Nearby Donors Alerted (${res.alertedDonors.length} found via PostGIS):
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Alert Order</th>
+                                        <th>Donor Name</th>
+                                        <th>Phone</th>
+                                        <th>Group</th>
+                                        <th>Distance (PostGIS)</th>
+                                        <th>Reliability Score</th>
+                                        <th>One-Tap WhatsApp</th>
+                                        <th>SMS Simulator</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${res.alertedDonors.map((rd, i) => {
+                                        const d = rd.donor;
+                                        const alertObj = res.alerts[i] || {};
+                                        const waLink = alertObj.whatsappLink || '#';
+                                        return `
+                                            <tr>
+                                                <td><span class="badge badge-purple">#${i + 1}</span></td>
+                                                <td><strong>${d.fullName}</strong></td>
+                                                <td>${d.phone}</td>
+                                                <td><span class="badge badge-red">${formatBloodGroup(d.bloodGroup)}</span></td>
+                                                <td>📍 <strong>${rd.distanceKm} km</strong></td>
+                                                <td>
+                                                    <span class="badge badge-green" title="0.5 Response + 0.3 Fulfilment + 0.2 Recency">
+                                                        ⭐ ${(rd.reliabilityScore * 100).toFixed(0)}%
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="${waLink}" target="_blank" class="btn btn-whatsapp" style="padding: 4px 10px; font-size: 11px;">
+                                                        💬 Open wa.me Link
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-blue">SMS INBOX DISPATCHED</span>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (!isStockAllocated) {
+                donorsHtml = `<div style="margin-top: 14px; color: var(--orange);">No eligible donors found within search radius. Try expanding radius to 50km.</div>`;
+            }
+
+            container.innerHTML = `
+                <div class="alert-result-box" style="border-left: 4px solid ${isStockAllocated ? 'var(--green)' : 'var(--red)'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="font-family: var(--font-display); font-size: 18px; font-weight: 700; ${headerStyle}">
+                            ${res.allocationSummary}
+                        </div>
+                        <div>${badgeHtml}</div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                        <strong>Request Number:</strong> <code>${res.request.requestNumber}</code> | 
+                        <strong>Patient:</strong> ${res.request.patientName} | 
+                        <strong>Units:</strong> ${res.unitsRequested} unit(s) of ${formatBloodGroup(res.request.bloodGroup)} | 
+                        <strong>Units from Stock:</strong> ${res.unitsFromStock} | 
+                        <strong>Donors Alerted:</strong> ${res.unitsFromDonorsAlerted}
+                    </div>
+                    ${donorsHtml}
+                </div>
+            `;
+        }
+
+        async function loadRecentBloodRequests() {
+            try {
+                const res = await fetch(`${API_BASE}/blood/requests`);
+                const reqs = await res.json();
+                const tbody = document.getElementById('tbody-recent-requests');
+                if (reqs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted);">No requests logged yet.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = reqs.map(r => `
+                    <tr>
+                        <td><code>${r.requestNumber}</code></td>
+                        <td><strong>${r.patientName}</strong></td>
+                        <td><span class="badge badge-red">${formatBloodGroup(r.bloodGroup)}</span></td>
+                        <td>${r.unitsNeeded}</td>
+                        <td>${r.unitsAllocatedFromStock}</td>
+                        <td>${r.unitsFulfilledByDonors || (r.status === 'ALERTING_DONORS' || r.status === 'PARTIALLY_FULFILLED' ? 'Yes' : '0')}</td>
+                        <td><span class="badge badge-orange">${r.urgency}</span></td>
+                        <td><span class="badge badge-blue">${r.status}</span></td>
+                        <td>${new Date(r.createdAt).toLocaleTimeString()}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function quickEmergencyBloodAlert() {
+            switchTab('request');
+            document.getElementById('req-blood-group').value = 'O_NEGATIVE';
+            document.getElementById('req-units-needed').value = 2;
+            document.getElementById('req-urgency').value = 'CRITICAL_EMERGENCY';
+            document.getElementById('form-blood-request').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ==================== 3. DONOR REGISTRY ====================
+        async function loadDonors() {
+            const bg = document.getElementById('filter-donor-group').value;
+            let url = `${API_BASE}/blood/donors`;
+            if (bg) url += `?bloodGroup=${bg}`;
+
+            try {
+                const res = await fetch(url);
+                const donors = await res.json();
+                renderDonors(donors);
+            } catch (err) {
+                console.error('Failed to load donors:', err);
+            }
+        }
+
+        function renderDonors(donors) {
+            const tbody = document.getElementById('tbody-donors');
+            if (donors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-muted);">No donors found.</td></tr>';
+                return;
+            }
+
+            const today = new Date();
+
+            tbody.innerHTML = donors.map(d => {
+                // Calculate cool-down
+                let cooldownBadge = '<span class="badge badge-green">ELIGIBLE</span>';
+                if (d.lastDonationDate) {
+                    const lastDate = new Date(d.lastDonationDate);
+                    const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+                    if (diffDays < 90) {
+                        const rem = 90 - diffDays;
+                        cooldownBadge = `<span class="badge badge-orange">COOL-DOWN: ${rem}d left</span>`;
+                    }
+                }
+
+                // Reliability breakdown
+                const respRate = d.totalAlertsReceived > 0 ? (d.totalAlertsResponded / d.totalAlertsReceived) : 0.9;
+                const fulfRate = d.totalAlertsResponded > 0 ? (d.totalDonationsFulfilled / d.totalAlertsResponded) : 0.85;
+                const relScore = (0.5 * respRate) + (0.3 * fulfRate) + (0.2 * 0.85);
+
+                const waDirectLink = `https://wa.me/${d.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('URGENT: Blood alert from SanjeevaniGrid Yavatmal. Can you donate?')}`;
+
+                return `
+                    <tr>
+                        <td><strong>${d.fullName}</strong></td>
+                        <td>${d.phone}</td>
+                        <td><span class="badge badge-red">${formatBloodGroup(d.bloodGroup)}</span></td>
+                        <td><small>${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}</small></td>
+                        <td>${d.address || d.district}</td>
+                        <td>
+                            <label class="switch">
+                                <input type="checkbox" ${d.available ? 'checked' : ''} onchange="toggleDonorAvailability('${d.id}')">
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <label class="switch">
+                                <input type="checkbox" ${d.consentGiven ? 'checked' : ''} onchange="toggleDonorConsent('${d.id}')">
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td>${cooldownBadge}</td>
+                        <td>
+                            <span class="badge badge-teal" style="background: rgba(20,184,166,0.15); color: var(--teal); font-weight: 700;">
+                                ⭐ ${(relScore * 100).toFixed(0)}%
+                            </span>
+                        </td>
+                        <td>
+                            <a href="${waDirectLink}" target="_blank" class="btn btn-whatsapp" style="padding: 3px 8px; font-size: 11px;">
+                                💬 WhatsApp
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function toggleDonorAvailability(id) {
+            try {
+                await fetch(`${API_BASE}/blood/donors/${id}/toggle-availability`, { method: 'PATCH' });
+                loadDonors();
+            } catch (err) {
+                alert('Toggle failed: ' + err);
+            }
+        }
+
+        async function toggleDonorConsent(id) {
+            try {
+                await fetch(`${API_BASE}/blood/donors/${id}/toggle-consent`, { method: 'PATCH' });
+                loadDonors();
+            } catch (err) {
+                alert('Toggle failed: ' + err);
+            }
+        }
+
+        function openRegisterDonorModal() {
+            openModal('modal-register-donor');
+        }
+
+        async function handleDonorRegister(e) {
+            e.preventDefault();
+            const body = {
+                fullName: document.getElementById('donor-reg-name').value,
+                phone: document.getElementById('donor-reg-phone').value,
+                bloodGroup: document.getElementById('donor-reg-group').value,
+                latitude: parseFloat(document.getElementById('donor-reg-lat').value),
+                longitude: parseFloat(document.getElementById('donor-reg-lon').value),
+                address: document.getElementById('donor-reg-address').value,
+                district: 'Yavatmal',
+                consentGiven: document.getElementById('donor-reg-consent').checked
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/blood/donors/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    closeModal('modal-register-donor');
+                    loadDonors();
+                }
+            } catch (err) {
+                alert('Registration failed: ' + err);
+            }
+        }
+
+        // ==================== 4. CAMPS & RSVP ====================
+        async function loadCamps() {
+            try {
+                const res = await fetch(`${API_BASE}/blood/camps`);
+                const camps = await res.json();
+                renderCamps(camps);
+            } catch (err) {
+                console.error('Failed to load camps:', err);
+            }
+        }
+
+        function renderCamps(camps) {
+            const container = document.getElementById('camps-cards-container');
+            if (camps.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-muted);">No scheduled donation camps.</div>';
+                return;
+            }
+
+            container.innerHTML = camps.map(c => `
+                <div class="card" style="margin-bottom: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <span class="badge badge-purple" style="margin-bottom: 6px;">${c.district}</span>
+                            <h3 style="font-family: var(--font-display); font-size: 17px; font-weight: 700; color: #fff;">${c.name}</h3>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${c.organizerName}</div>
+                        </div>
+                        <span class="badge badge-green">${c.status}</span>
+                    </div>
+
+                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
+                        <div>📍 <strong>Venue:</strong> ${c.venue}, ${c.address}</div>
+                        <div>📅 <strong>Date:</strong> ${c.campDate} | ⏰ <strong>Time:</strong> ${c.startTime} - ${c.endTime}</div>
+                        <div>🎯 <strong>Target:</strong> ${c.targetUnits} units | 👥 <strong>RSVPs:</strong> ${c.registeredCount} donors</div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" style="flex: 1;" onclick="openCampRsvpModal('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+                            <span>✍️ RSVP as Donor</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCampRsvpModal(campId, campName) {
+            document.getElementById('rsvp-camp-id').value = campId;
+            document.getElementById('rsvp-camp-title').innerText = campName;
+            openModal('modal-camp-rsvp');
+        }
+
+        async function handleCampRsvpSubmit(e) {
+            e.preventDefault();
+            const campId = document.getElementById('rsvp-camp-id').value;
+            const body = {
+                donorName: document.getElementById('rsvp-donor-name').value,
+                donorPhone: document.getElementById('rsvp-donor-phone').value,
+                bloodGroup: document.getElementById('rsvp-blood-group').value,
+                notes: document.getElementById('rsvp-notes').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/blood/camps/${campId}/rsvp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                alert(result.message);
+                closeModal('modal-camp-rsvp');
+                loadCamps();
+            } catch (err) {
+                alert('RSVP failed: ' + err);
+            }
+        }
+
+        // ==================== 5. SHORTAGE ANALYTICS ====================
+        async function loadShortageAnalytics() {
+            try {
+                const res = await fetch(`${API_BASE}/blood/analytics/shortage`);
+                const data = await res.json();
+                renderShortageAnalytics(data);
+            } catch (err) {
+                console.error('Failed to load shortage analytics:', err);
+            }
+        }
+
+        function renderShortageAnalytics(data) {
+            document.getElementById('metric-health-score').innerText = `${data.overallDistrictHealthScore.toFixed(0)}%`;
+
+            const listRec = document.getElementById('list-recommendations');
+            if (data.recommendations && data.recommendations.length > 0) {
+                listRec.innerHTML = data.recommendations.map(r => `<li>${r}</li>`).join('');
+            } else {
+                listRec.innerHTML = '<li>District blood bank inventory is in balanced condition.</li>';
+            }
+
+            const tbody = document.getElementById('tbody-analytics');
+            tbody.innerHTML = data.groupBreakdown.map(g => {
+                let statusBadge = '';
+                if (g.status === 'CRITICAL_SHORTAGE') {
+                    statusBadge = '<span class="badge badge-red">CRITICAL SHORTAGE</span>';
+                } else if (g.status === 'LOW_STOCK') {
+                    statusBadge = '<span class="badge badge-orange">LOW STOCK</span>';
+                } else if (g.status === 'ADEQUATE') {
+                    statusBadge = '<span class="badge badge-green">ADEQUATE</span>';
+                } else {
+                    statusBadge = '<span class="badge badge-blue">SURPLUS</span>';
+                }
+
+                const netColor = g.netDeficitOrSurplus < 0 ? 'var(--red)' : 'var(--green)';
+
+                return `
+                    <tr>
+                        <td><strong style="font-size: 15px; color: #fff;">${g.label}</strong></td>
+                        <td><span style="font-weight: 700; font-size: 14px;">${g.unitsAvailable}</span> units</td>
+                        <td>${g.unitsReserved} units</td>
+                        <td>${g.safeBuffer} units</td>
+                        <td><strong style="color: ${netColor};">${g.netDeficitOrSurplus > 0 ? '+' : ''}${g.netDeficitOrSurplus} units</strong></td>
+                        <td><span style="color: ${g.expiringNext7Days > 0 ? 'var(--red)' : 'inherit'};">${g.expiringNext7Days} units</span></td>
+                        <td>${g.expiringNext14Days} units</td>
+                        <td>${g.estimatedDaysOfSupply} days</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==================== 6. HOSPITAL ONBOARDING ====================
+        async function loadHospitals() {
+            try {
+                const res = await fetch(`${API_BASE}/integration/hospitals/all`);
+                const hospitals = await res.json();
+                renderHospitals(hospitals);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderHospitals(hospitals) {
+            const tbody = document.getElementById('tbody-hospitals');
+            if (hospitals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No hospitals registered.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = hospitals.map(h => {
+                let statusBadge = h.verified
+                        ? '<span class="badge badge-green">VERIFIED</span>'
+                        : '<span class="badge badge-orange">PENDING APPROVAL</span>';
+
+                let actionBtn = h.verified
+                        ? '<span style="color: var(--teal); font-size: 12px; font-weight: 600;">Active Feed Endpoint</span>'
+                        : `<button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;" onclick="verifyHospital('${h.id}', '${h.name.replace(/'/g, "\\'")}')">Verify & Issue API Key</button>`;
+
+                return `
+                    <tr>
+                        <td><strong>${h.name}</strong></td>
+                        <td><code>${h.licenceNumber || 'N/A'}</code></td>
+                        <td>${h.district}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function handleHospitalRegister(e) {
+            e.preventDefault();
+            const body = {
+                name: document.getElementById('onboard-name').value,
+                licenceNumber: document.getElementById('onboard-licence').value,
+                address: document.getElementById('onboard-address').value,
+                district: document.getElementById('onboard-district').value,
+                phone: document.getElementById('onboard-phone').value,
+                latitude: document.getElementById('onboard-lat').value,
+                longitude: document.getElementById('onboard-lon').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/integration/hospitals/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                alert(result.message);
+                document.getElementById('form-hospital-register').reset();
+                loadHospitals();
+            } catch (err) {
+                alert('Hospital registration failed: ' + err);
+            }
+        }
+
+        async function verifyHospital(id, name) {
+            try {
+                const res = await fetch(`${API_BASE}/integration/hospitals/${id}/verify`, { method: 'POST' });
+                const result = await res.json();
+
+                document.getElementById('modal-key-hospital-name').innerText = name;
+                document.getElementById('display-raw-api-key').value = result.rawApiKey;
+                document.getElementById('display-feed-endpoint').value = `POST ${result.feedEndpoint}`;
+
+                openModal('modal-api-key');
+                loadHospitals();
+            } catch (err) {
+                alert('Verification failed: ' + err);
+            }
+        }
+
+        function copyApiKeyToClipboard() {
+            const input = document.getElementById('display-raw-api-key');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            alert('API Key copied to clipboard!');
+        }
+
+        // ==================== 7. FHIR FEED TESTER ====================
+        function updateFeedEndpointUrl() {
+            const hid = document.getElementById('feed-hospital-id').value;
+            document.getElementById('feed-target-url-label').innerText = `POST /api/feed/${hid}`;
+        }
+
+        function loadFhirPreset() {
+            const preset = document.getElementById('feed-template-select').value;
+            let sample = '';
+
+            if (preset === 'location') {
+                sample = JSON.stringify({
+                    resourceType: "Location",
+                    name: "Emergency & Trauma Ward",
+                    status: "active",
+                    totalBeds: 30,
+                    availableBeds: 8,
+                    extension: [
+                        { url: "http://sanjeevanigrid.in/fhir/totalBeds", valueInteger: 30 },
+                        { url: "http://sanjeevanigrid.in/fhir/availableBeds", valueInteger: 8 }
+                    ]
+                }, null, 2);
+            } else if (preset === 'observation-blood') {
+                sample = JSON.stringify({
+                    resourceType: "Observation",
+                    status: "final",
+                    code: {
+                        coding: [
+                            {
+                                system: "http://sanjeevanigrid.in/codes",
+                                code: "blood-stock",
+                                display: "Blood Stock Level"
+                            }
+                        ]
+                    },
+                    subject: {
+                        reference: "BloodGroup/O_NEGATIVE"
+                    },
+                    valueQuantity: {
+                        value: 12,
+                        unit: "units"
+                    }
+                }, null, 2);
+            } else if (preset === 'observation-o2') {
+                sample = JSON.stringify({
+                    resourceType: "Observation",
+                    status: "final",
+                    code: {
+                        coding: [
+                            {
+                                system: "http://sanjeevanigrid.in/codes",
+                                code: "oxygen-level",
+                                display: "Central Oxygen Tank Level"
+                            }
+                        ]
+                    },
+                    valueQuantity: {
+                        value: 98.4,
+                        unit: "%"
+                    }
+                }, null, 2);
+            } else if (preset === 'bundle') {
+                sample = JSON.stringify({
+                    resourceType: "Bundle",
+                    type: "transaction",
+                    entry: [
+                        {
+                            resource: {
+                                resourceType: "Location",
+                                name: "ICU Ward",
+                                totalBeds: 20,
+                                availableBeds: 4
+                            }
+                        },
+                        {
+                            resource: {
+                                resourceType: "Observation",
+                                status: "final",
+                                code: {
+                                    coding: [{ code: "blood-stock" }]
+                                },
+                                subject: { reference: "BloodGroup/AB_NEGATIVE" },
+                                valueQuantity: { value: 6, unit: "units" }
+                            }
+                        }
+                    ]
+                }, null, 2);
+            }
+
+            document.getElementById('feed-payload-json').value = sample;
+            updateFeedEndpointUrl();
+        }
+
+        async function sendFhirFeed() {
+            const hid = document.getElementById('feed-hospital-id').value;
+            const apiKey = document.getElementById('feed-api-key').value;
+            const payload = document.getElementById('feed-payload-json').value;
+            const statusLabel = document.getElementById('feed-send-status');
+
+            statusLabel.style.color = 'var(--teal)';
+            statusLabel.innerText = 'Dispatching FHIR HTTP POST...';
+
+            try {
+                const res = await fetch(`${API_BASE}/feed/${hid}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-KEY': apiKey
+                    },
+                    body: payload
+                });
+
+                const text = await res.text();
+                statusLabel.style.color = res.ok ? 'var(--green)' : 'var(--red)';
+                statusLabel.innerText = `HTTP ${res.status} ${res.ok ? 'SUCCESS' : 'FAILED'}`;
+
+                document.getElementById('feed-result-container').style.display = 'block';
+                document.getElementById('feed-response-json').innerText = text;
+
+                if (res.ok) {
+                    loadBloodStocks();
+                    loadFeedLogs();
+                    loadWebhooks();
+                }
+            } catch (err) {
+                statusLabel.style.color = 'var(--red)';
+                statusLabel.innerText = 'Network error: ' + err;
+            }
+        }
+
+        // ==================== 8. CSV IMPORT STUDIO ====================
+        function handleEntityTypeChange() {
+            const type = document.getElementById('csv-entity-type').value;
+            loadSampleCsv(type);
+        }
+
+        function loadSampleCsv(type) {
+            document.getElementById('csv-entity-type').value = type;
+            let sample = '';
+            if (type === 'BLOOD_STOCK') {
+                sample = `bloodGroup,unitsAvailable,expiryDate,lowStockThreshold\nA+,18,2026-12-15,5\nB+,25,2026-12-20,5\nO-,8,2026-11-28,5\nAB-,3,2026-11-20,5\nINVALID_BG,10,2026-12-01,5`;
+            } else if (type === 'DONORS') {
+                sample = `fullName,phone,bloodGroup,latitude,longitude,address,district\nRamesh Kadam,+919822100061,O_POSITIVE,20.395,78.132,Wadgaon Road,Yavatmal\nPooja Shinde,+919822100062,B_NEGATIVE,20.401,78.118,Lohara,Yavatmal\nBad Donor,123,O-,999.0,78.12,Invalid Lat,Yavatmal`;
+            }
+            document.getElementById('csv-text-input').value = sample;
+        }
+
+        async function previewCsv() {
+            const entityType = document.getElementById('csv-entity-type').value;
+            const csvContent = document.getElementById('csv-text-input').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/integration/csv/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entityType: entityType, csvContent: csvContent })
+                });
+                const preview = await res.json();
+                renderCsvPreview(preview);
+            } catch (err) {
+                alert('Preview error: ' + err);
+            }
+        }
+
+        function renderCsvPreview(p) {
+            const container = document.getElementById('csv-preview-container');
+            container.style.display = 'block';
+
+            const commitBtn = document.getElementById('btn-commit-csv');
+            if (p.validRows > 0) commitBtn.style.display = 'inline-flex';
+            else commitBtn.style.display = 'none';
+
+            let errorsHtml = '';
+            if (p.errors && p.errors.length > 0) {
+                errorsHtml = `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
+                        <div style="font-weight: 700; color: var(--red); margin-bottom: 6px;">Validation Errors Detected (${p.errors.length}):</div>
+                        <ul style="padding-left: 20px; font-size: 12px; color: var(--red);">
+                            ${p.errors.map(e => `<li>Row ${e.rowNumber} [Column '${e.column}']: ${e.message} (Raw: <code>${e.rawValue}</code>)</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div style="display: flex; gap: 14px; margin-bottom: 14px;">
+                    <div class="metric-card" style="padding: 12px 18px;">
+                        <div class="metric-label">Total Rows</div>
+                        <div class="metric-value" style="font-size: 22px;">${p.totalRows}</div>
+                    </div>
+                    <div class="metric-card" style="padding: 12px 18px;">
+                        <div class="metric-label">Valid Rows</div>
+                        <div class="metric-value" style="font-size: 22px; color: var(--green);">${p.validRows}</div>
+                    </div>
+                    <div class="metric-card" style="padding: 12px 18px;">
+                        <div class="metric-label">Invalid Rows</div>
+                        <div class="metric-value" style="font-size: 22px; color: var(--red);">${p.invalidRows}</div>
+                    </div>
+                </div>
+
+                ${errorsHtml}
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Row #</th>
+                                <th>Validation Status</th>
+                                ${p.detectedColumns.map(c => `<th>${c}</th>`).join('')}
+                                <th>Row Issues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${p.previewRows.map(r => `
+                                <tr style="background: ${r.status === 'VALID' ? 'rgba(34, 197, 94, 0.04)' : 'rgba(239, 68, 68, 0.08)'};">
+                                    <td>#${r.rowNumber}</td>
+                                    <td>${r.status === 'VALID' ? '<span class="badge badge-green">VALID</span>' : '<span class="badge badge-red">INVALID</span>'}</td>
+                                    ${p.detectedColumns.map(c => `<td>${r.data[c] || ''}</td>`).join('')}
+                                    <td style="color: var(--red); font-size: 11px;">${r.rowErrors.join(', ') || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function commitCsv() {
+            const entityType = document.getElementById('csv-entity-type').value;
+            const hospitalId = document.getElementById('csv-hospital-id').value;
+            const csvContent = document.getElementById('csv-text-input').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/integration/csv/commit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entityType: entityType, hospitalId: hospitalId, csvContent: csvContent })
+                });
+                const result = await res.json();
+                alert(result.message);
+                loadBloodStocks();
+                loadDonors();
+                loadShortageAnalytics();
+            } catch (err) {
+                alert('Commit failed: ' + err);
+            }
+        }
+
+        // ==================== 9. SIMULATED FEED & WEBHOOKS ====================
+        async function triggerSimulatedFeedCycle() {
+            const hospId = document.getElementById('sim-hospital-id').value;
+            try {
+                const res = await fetch(`${API_BASE}/integration/simulate-feed`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hospitalId: hospId })
+                });
+                const result = await res.json();
+                const box = document.getElementById('sim-feed-result');
+                box.style.display = 'block';
+                box.innerHTML = `<span style="color: var(--green);">✔ ${result.summary}</span>`;
+                loadBloodStocks();
+                loadFeedLogs();
+                loadWebhooks();
+            } catch (err) {
+                alert('Simulation error: ' + err);
+            }
+        }
+
+        async function loadFeedLogs() {
+            try {
+                const res = await fetch(`${API_BASE}/integration/feed-logs`);
+                const logs = await res.json();
+                const container = document.getElementById('feed-logs-list');
+                if (logs.length === 0) {
+                    container.innerHTML = '<div>No feed logs yet.</div>';
+                    return;
+                }
+                container.innerHTML = logs.slice(0, 10).map(l => `
+                    <div style="border-bottom: 1px solid var(--border-light); padding: 6px 0;">
+                        <span class="badge badge-purple">${l.sourceType}</span>
+                        <strong style="color: #fff;">${l.resourceType}</strong>: ${l.summary || l.status}
+                        <div style="color: var(--text-muted); font-size: 10px;">${new Date(l.createdAt).toLocaleTimeString()}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadWebhooks() {
+            try {
+                const res = await fetch(`${API_BASE}/integration/webhooks`);
+                const webhooks = await res.json();
+                const tbody = document.getElementById('tbody-webhooks');
+                if (webhooks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No webhooks queued.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = webhooks.map(w => `
+                    <tr>
+                        <td><strong>${w.eventType}</strong></td>
+                        <td><span class="badge ${w.status === 'DELIVERED' ? 'badge-green' : 'badge-orange'}">${w.status}</span></td>
+                        <td>${w.attempts}</td>
+                        <td><code style="font-size: 11px;">${w.payload ? w.payload.substring(0, 45) + '...' : '-'}</code></td>
+                        <td>
+                            ${w.status !== 'DELIVERED'
+                                ? `<button class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="dispatchWebhook('${w.id}')">Dispatch Now</button>`
+                                : '<span style="color: var(--green); font-size: 11px;">Delivered</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function dispatchWebhook(id) {
+            try {
+                await fetch(`${API_BASE}/integration/webhooks/${id}/dispatch`, { method: 'POST' });
+                loadWebhooks();
+            } catch (err) {
+                alert('Dispatch error: ' + err);
+            }
+        }
+
+        // ==================== 10. SMS INBOX & ADAPTERS ====================
+        async function loadSmsInbox() {
+            try {
+                const res = await fetch(`${API_BASE}/sms-inbox`);
+                const messages = await res.json();
+                currentSmsMessages = messages;
+                renderSmsInbox(messages);
+            } catch (err) {
+                console.error('Failed to load SMS inbox:', err);
+            }
+        }
+
+        function renderSmsInbox(messages) {
+            const container = document.getElementById('sms-inbox-container');
+            if (messages.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 30px;">Virtual SMS Inbox is empty. Trigger an emergency blood request or OTP to see live SMS dispatches!</div>';
+                return;
+            }
+
+            container.innerHTML = messages.slice().reverse().map(m => {
+                const isBloodAlert = m.message.includes('BLOOD_ALERT') || m.message.includes('Blood Alert');
+                const isReply = m.message.includes('[INCOMING REPLY]');
+                const isOtp = m.message.includes('OTP');
+
+                let badge = '<span class="badge badge-blue">SMS</span>';
+                if (isBloodAlert) badge = '<span class="badge badge-red">🚨 DONOR BLOOD ALERT</span>';
+                if (isReply) badge = '<span class="badge badge-green">💬 INCOMING DONOR REPLY</span>';
+                if (isOtp) badge = '<span class="badge badge-purple">🔑 OTP</span>';
+
+                return `
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${badge}
+                                <strong style="color: #fff; font-size: 13px;">To: ${m.phone}</strong>
+                            </div>
+                            <span style="font-size: 11px; color: var(--text-muted);">${new Date(m.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-primary); line-height: 1.5; font-family: sans-serif;">
+                            ${m.message}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterSmsInbox() {
+            const q = document.getElementById('sms-search-input').value.toLowerCase();
+            const filtered = currentSmsMessages.filter(m =>
+                m.phone.toLowerCase().includes(q) || m.message.toLowerCase().includes(q)
+            );
+            renderSmsInbox(filtered);
+        }
+
+        async function clearSmsInbox() {
+            if (!confirm('Clear virtual SMS inbox?')) return;
+            try {
+                await fetch(`${API_BASE}/sms-inbox`, { method: 'DELETE' });
+                loadSmsInbox();
+            } catch (err) {
+                alert('Clear error: ' + err);
+            }
+        }
+
+        function openSimulateReplyModal() {
+            openModal('modal-sms-reply');
+        }
+
+        async function handleSimulateSmsReply(e) {
+            e.preventDefault();
+            const phone = document.getElementById('sms-reply-phone').value;
+            const message = document.getElementById('sms-reply-text').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/sms-inbox/simulate-reply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone, message: message })
+                });
+                if (res.ok) {
+                    closeModal('modal-sms-reply');
+                    loadSmsInbox();
+                }
+            } catch (err) {
+                alert('Error simulating reply: ' + err);
+            }
+        }
+
+        async function loadTelegramStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/telegram-status`);
+                const data = await res.json();
+                const badge = document.getElementById('badge-telegram-status');
+                const toggle = document.getElementById('toggle-telegram-flag');
+                const detail = document.getElementById('telegram-status-detail');
+
+                toggle.checked = data.enabled;
+                if (data.enabled) {
+                    badge.className = 'badge badge-green';
+                    badge.innerText = 'FLAG: ENABLED (LIVE DISPATCH)';
+                    detail.innerText = `Telegram Bot is active! Dispatched alerts will be delivered to Telegram bot channel.`;
+                } else {
+                    badge.className = 'badge badge-purple';
+                    badge.innerText = 'FLAG: DISABLED (SAFE SKIP)';
+                    detail.innerText = `Telegram Bot is disabled (app.telegram.enabled=false). Alerts are safely skipped with audit logging.`;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleTelegramFlagToggle(enabled) {
+            try {
+                await fetch(`${API_BASE}/telegram-toggle?enabled=${enabled}`, { method: 'POST' });
+                loadTelegramStatus();
+            } catch (err) {
+                alert('Toggle failed: ' + err);
+            }
+        }
+
+        async function loadWhatsAppOutbox() {
+            try {
+                const res = await fetch(`${API_BASE}/whatsapp-outbox`);
+                const outbox = await res.json();
+                const container = document.getElementById('whatsapp-outbox-list');
+                if (outbox.length === 0) {
+                    container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">No WhatsApp links generated yet.</div>';
+                    return;
+                }
+                container.innerHTML = outbox.slice().reverse().slice(0, 6).map(w => `
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <strong style="color: #25D366;">To: ${w.cleanPhone}</strong>
+                            <span style="color: var(--text-muted); font-size: 10px;">${new Date(w.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <a href="${w.waLink}" target="_blank" class="btn btn-whatsapp" style="padding: 3px 8px; font-size: 11px; width: 100%; text-align: center;">
+                            💬 Open wa.me Link
+                        </a>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ==================== UTILS ====================
+        function formatBloodGroup(bg) {
+            if (!bg) return '';
+            const map = {
+                'A_POSITIVE': 'A+', 'A_NEGATIVE': 'A-',
+                'B_POSITIVE': 'B+', 'B_NEGATIVE': 'B-',
+                'AB_POSITIVE': 'AB+', 'AB_NEGATIVE': 'AB-',
+                'O_POSITIVE': 'O+', 'O_NEGATIVE': 'O-'
+            };
+            return map[bg] || bg;
+        }
+
+        // ==================== I18N ====================
+        const i18n = {
+            en: {
+                sandbox: "SANDBOX MODE",
+                stocks: "Blood Stocks",
+                request: "Request Blood (Stock 1st, Donors 2nd)",
+                donors: "Donor Registry & Reliability",
+                camps: "Donation Camps & RSVP",
+                analytics: "Shortage Analytics",
+                onboarding: "Hospital Onboarding",
+                feed: "API-Key Feed (FHIR)",
+                csv: "CSV Import Studio",
+                simulated: "Simulated Feed & Webhooks",
+                sms: "SMS Inbox & Adapters"
+            },
+            hi: {
+                sandbox: "सैंडबॉक्स मोड",
+                stocks: "रक्त स्टॉक",
+                request: "रक्त अनुरोध (पहले स्टॉक, फिर दाता)",
+                donors: "रक्तदाता सूची और विश्वसनीयता",
+                camps: "रक्तदान शिविर एवं आरएसवीपी",
+                analytics: "कमी विश्लेषण चार्ट",
+                onboarding: "अस्पताल ऑनबोर्डिंग",
+                feed: "एपीआई-की फीड (FHIR)",
+                csv: "सीएसवी आयात स्टूडियो",
+                simulated: "सिम्युलेटेड फीड और वेबहुक",
+                sms: "एसएमएस इनबॉक्स और एडेप्टर"
+            },
+            mr: {
+                sandbox: "सँडबॉक्स मोड",
+                stocks: "रक्त साठा",
+                request: "रक्त विनंती (आधी साठा, नंतर दाते)",
+                donors: "रक्तदाते यादी व विश्वसनीयता",
+                camps: "रक्तदान शिबिरे व नोंदणी",
+                analytics: "तुटवडा विश्लेषण चार्ट",
+                onboarding: "रुग्णालय ऑनबोर्डिंग",
+                feed: "एपीआय-की फीड (FHIR)",
+                csv: "सीएसव्ही आयात स्टुडिओ",
+                simulated: "सिम्युलेटेड फीड व वेबहुक्स",
+                sms: "एसएमएस इनबॉक्स व अ‍ॅडॉप्टर्स"
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.toLowerCase().startsWith(lang) || (lang === 'hi' && b.innerText.includes('हिंदी')) || (lang === 'mr' && b.innerText.includes('मराठी')));
+            });
+
+            const dict = i18n[lang] || i18n.en;
+            document.getElementById('txt-sandbox-mode').innerText = dict.sandbox;
+            document.getElementById('txt-tab-stocks').innerText = dict.stocks;
+            document.getElementById('txt-tab-request').innerText = dict.request;
+            document.getElementById('txt-tab-donors').innerText = dict.donors;
+            document.getElementById('txt-tab-camps').innerText = dict.camps;
+            document.getElementById('txt-tab-analytics').innerText = dict.analytics;
+            document.getElementById('txt-tab-onboarding').innerText = dict.onboarding;
+            document.getElementById('txt-tab-feed').innerText = dict.feed;
+            document.getElementById('txt-tab-csv').innerText = dict.csv;
+            document.getElementById('txt-tab-simulated').innerText = dict.simulated;
+            document.getElementById('txt-tab-sms').innerText = dict.sms;
+        }
+    </script>
+</body>
+</html>
