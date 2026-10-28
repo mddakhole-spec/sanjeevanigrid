@@ -184,14 +184,14 @@ VALUES (
 -- Note: O_NEGATIVE and AB_NEGATIVE are below low-stock threshold (5) to demonstrate smart warnings!
 INSERT INTO blood_stocks (id, hospital_id, blood_group, units_available, units_reserved, expiry_date, low_stock_threshold)
 VALUES
-    ('s1111111-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'A_POSITIVE', 14, 2, CURRENT_DATE + INTERVAL '24 days', 5),
-    ('s1111111-0000-0000-0000-000000000002', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'A_NEGATIVE', 6, 0, CURRENT_DATE + INTERVAL '18 days', 5),
-    ('s1111111-0000-0000-0000-000000000003', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'B_POSITIVE', 22, 3, CURRENT_DATE + INTERVAL '30 days', 5),
-    ('s1111111-0000-0000-0000-000000000004', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'B_NEGATIVE', 7, 1, CURRENT_DATE + INTERVAL '14 days', 5),
-    ('s1111111-0000-0000-0000-000000000005', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'AB_POSITIVE', 9, 0, CURRENT_DATE + INTERVAL '28 days', 5),
-    ('s1111111-0000-0000-0000-000000000006', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'AB_NEGATIVE', 2, 0, CURRENT_DATE + INTERVAL '9 days', 5),  -- CRITICAL LOW STOCK
-    ('s1111111-0000-0000-0000-000000000007', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'O_POSITIVE', 26, 4, CURRENT_DATE + INTERVAL '32 days', 5),
-    ('s1111111-0000-0000-0000-000000000008', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'O_NEGATIVE', 1, 0, CURRENT_DATE + INTERVAL '7 days', 5)   -- CRITICAL LOW STOCK & EXPIRING
+    ('e1111111-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'A_POSITIVE', 14, 2, CURRENT_DATE + INTERVAL '24 days', 5),
+    ('e1111111-0000-0000-0000-000000000002', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'A_NEGATIVE', 6, 0, CURRENT_DATE + INTERVAL '18 days', 5),
+    ('e1111111-0000-0000-0000-000000000003', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'B_POSITIVE', 22, 3, CURRENT_DATE + INTERVAL '30 days', 5),
+    ('e1111111-0000-0000-0000-000000000004', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'B_NEGATIVE', 7, 1, CURRENT_DATE + INTERVAL '14 days', 5),
+    ('e1111111-0000-0000-0000-000000000005', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'AB_POSITIVE', 9, 0, CURRENT_DATE + INTERVAL '28 days', 5),
+    ('e1111111-0000-0000-0000-000000000006', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'AB_NEGATIVE', 2, 0, CURRENT_DATE + INTERVAL '9 days', 5),  -- CRITICAL LOW STOCK
+    ('e1111111-0000-0000-0000-000000000007', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'O_POSITIVE', 26, 4, CURRENT_DATE + INTERVAL '32 days', 5),
+    ('e1111111-0000-0000-0000-000000000008', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'O_NEGATIVE', 1, 0, CURRENT_DATE + INTERVAL '7 days', 5)   -- CRITICAL LOW STOCK & EXPIRING
 ON CONFLICT (hospital_id, blood_group, expiry_date) DO NOTHING;
 
 -- Seed Donors across Yavatmal District with varying coordinates, availability, cool-down dates, and reliability stats
@@ -233,6 +233,6 @@ ON CONFLICT (id) DO NOTHING;
 -- Seed initial RSVPs for Camp 1
 INSERT INTO camp_rsvps (id, camp_id, donor_name, donor_phone, blood_group, notes)
 VALUES
-    ('r1111111-1111-1111-1111-111111111101', 'c1111111-1111-1111-1111-111111111101', 'Sachin Wankhede', '+919822100007', 'B_POSITIVE', 'Will arrive at 10:30 AM'),
-    ('r1111111-1111-1111-1111-111111111102', 'c1111111-1111-1111-1111-111111111101', 'Rahul Shinde', '+919822100008', 'O_POSITIVE', 'First-time camp donor')
+    ('f1111111-1111-1111-1111-111111111101', 'c1111111-1111-1111-1111-111111111101', 'Sachin Wankhede', '+919822100007', 'B_POSITIVE', 'Will arrive at 10:30 AM'),
+    ('f1111111-1111-1111-1111-111111111102', 'c1111111-1111-1111-1111-111111111101', 'Rahul Shinde', '+919822100008', 'O_POSITIVE', 'First-time camp donor')
 ON CONFLICT (camp_id, donor_phone) DO NOTHING;

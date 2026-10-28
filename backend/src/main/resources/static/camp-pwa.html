@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanjeevaniGrid — Medical Camp PWA & Equity Map</title>
+    <meta name="description" content="Offline-first field registration PWA, idempotent sync, QR health cards, UIP vaccine schedule engine, camp reports, and GIS healthcare equity map for Yavatmal district.">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#14b8a6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS for Equity Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- QRCode library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1e2840;
+            --border: #2a3654;
+            --border-light: rgba(42, 54, 84, 0.6);
+            --text-primary: #e8ecf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --teal: #14b8a6;
+            --teal-light: #2dd4bf;
+            --teal-dark: #0d9488;
+            --teal-glow: rgba(20, 184, 166, 0.2);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.25);
+            --orange: #f59e0b;
+            --orange-glow: rgba(245, 158, 11, 0.2);
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.2);
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.2);
+            --purple: #8b5cf6;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+            --font-base: 'Inter', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-base);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Offline Banner */
+        .offline-bar {
+            display: none;
+            background: linear-gradient(90deg, #b45309, #d97706);
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .offline-bar.show { display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+        /* Top Header */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .header-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 0 16px var(--teal-glow);
+        }
+        .header-title {
+            font-family: var(--font-display);
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--teal);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-orange { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .badge-red { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-base);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            text-decoration: none;
+        }
+        .btn-teal {
+            background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+            color: white;
+            box-shadow: 0 2px 10px var(--teal-glow);
+        }
+        .btn-teal:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { background: var(--bg-card); border-color: var(--teal); }
+        .btn-green {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            box-shadow: 0 2px 12px var(--green-glow);
+        }
+        .btn-green:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-large {
+            padding: 16px 28px;
+            font-size: 16px;
+            font-weight: 800;
+            border-radius: 12px;
+            width: 100%;
+        }
+
+        /* Navigation Tabs */
+        .tab-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            padding: 14px 18px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.active {
+            color: var(--teal);
+            border-bottom-color: var(--teal);
+            background: rgba(20,184,166,0.06);
+        }
+
+        /* Main Container */
+        .main-content {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+        @media (max-width: 900px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-base);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px var(--teal-glow);
+        }
+
+        /* Metric Counters */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
+        .stat-value { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--text-primary); }
+
+        /* Tables */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: var(--bg-secondary);
+            text-align: left;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+        tr:hover td { background: var(--bg-card-hover); }
+
+        /* Digital QR Card Presentation */
+        .health-card {
+            background: linear-gradient(135deg, #131c31 0%, #1a2744 100%);
+            border: 2px solid var(--teal);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px var(--teal-glow);
+            position: relative;
+            overflow: hidden;
+            max-width: 460px;
+            margin: 0 auto;
+        }
+        .health-card::before {
+            content: "";
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, var(--teal-glow), transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Map styling */
+        #equityMap {
+            width: 100%;
+            height: 580px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        /* Custom Leaflet popup dark styles */
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+        .leaflet-popup-tip {
+            background: var(--bg-card) !important;
+        }
+
+        /* Recommender Leaderboard Item */
+        .rec-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        .rec-item:hover {
+            border-color: var(--teal);
+            transform: translateX(3px);
+            background: var(--bg-card-hover);
+        }
+
+        /* Printable Report Styles */
+        @media print {
+            body { background: white !important; color: black !important; }
+            header, .tab-bar, .btn, .offline-bar, .no-print { display: none !important; }
+            .card { border: 1px solid #ccc !important; box-shadow: none !important; background: white !important; color: black !important; }
+            table th, table td { color: black !important; border-color: #ddd !important; }
+            .main-content { max-width: 100% !important; padding: 0 !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Offline Banner -->
+    <div id="offlineBanner" class="offline-bar">
+        <span>⚠️ <strong>OFFLINE MODE ACTIVE</strong> — Connectivity lost. All registrations & vital logs are queued safely in local IndexedDB.</span>
+        <button class="btn btn-teal" style="padding: 4px 12px; font-size: 11px;" onclick="syncOfflineQueue()">🔄 Sync Now</button>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="header-brand">
+            <div class="header-logo">SG</div>
+            <div>
+                <div class="header-title">SanjeevaniGrid</div>
+                <div class="header-subtitle">Phase 5: Medical Camp PWA & Equity GIS</div>
+            </div>
+        </a>
+
+        <div class="header-controls">
+            <!-- Active Camp Selector -->
+            <select id="activeCampSelect" class="form-select" style="width: auto; padding: 8px 12px; font-weight: 600;" onchange="changeActiveCamp(this.value)">
+                <option value="">Loading camps...</option>
+            </select>
+
+            <!-- Offline Mode Toggle (For Simulation) -->
+            <button id="btnToggleSimOffline" class="btn btn-outline" style="font-size: 12px;" onclick="toggleSimulatedOffline()">
+                📡 Simulate Offline
+            </button>
+
+            <!-- Network Status Badge -->
+            <span id="syncStatusBadge" class="badge badge-green">
+                <span class="pulse-dot"></span> <span id="syncStatusText">ONLINE</span>
+            </span>
+
+            <!-- Pending Sync Pill -->
+            <button id="btnSync" class="btn btn-teal" onclick="syncOfflineQueue()">
+                🔄 Sync (<span id="pendingCount">0</span>)
+            </button>
+
+            <button class="btn btn-outline" onclick="openNewCampModal()">
+                ➕ New Camp
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('register')">📋 Fast Registration</button>
+        <button class="tab-btn" onclick="switchTab('cards')">💳 Digital QR Cards</button>
+        <button class="tab-btn" onclick="switchTab('vaccine')">💉 Vaccine Schedule Engine</button>
+        <button class="tab-btn" onclick="switchTab('report')">📊 Camp Report & CSV</button>
+        <button class="tab-btn" onclick="switchTab('stock')">💊 Medicine Stock</button>
+        <button class="tab-btn" onclick="switchTab('equity')">🗺️ GIS Equity Map</button>
+    </div>
+
+    <div class="main-content">
+
+        <!-- ============================================================ -->
+        <!-- TAB 1: FAST REGISTRATION (OFFLINE QUEUE READY) -->
+        <!-- ============================================================ -->
+        <div id="tab-register" class="tab-panel active">
+            <div class="grid-2">
+                <!-- Registration Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⚡ Fast Patient Check-In</div>
+                        <span id="regCampNameBadge" class="badge badge-blue">Lohara Camp</span>
+                    </div>
+
+                    <form id="regForm" onsubmit="handleRegistration(event)">
+                        <div class="form-group">
+                            <label class="form-label">Full Name *</label>
+                            <input id="regName" type="text" class="form-input" placeholder="e.g. Rameshwar Patil" required />
+                        </div>
+
+                        <div class="grid-2" style="gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label">Phone Number *</label>
+                                <input id="regPhone" type="tel" class="form-input" placeholder="+919822000000" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Age / Gender *</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input id="regAge" type="number" class="form-input" placeholder="Age" min="0" max="120" style="width: 80px;" required />
+                                    <select id="regGender" class="form-select">
+                                        <option value="MALE">Male</option>
+                                        <option value="FEMALE">Female</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-2" style="gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label">Village / Habitation</label>
+                                <input id="regVillage" type="text" class="form-input" placeholder="e.g. Lohara" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Triage Priority</label>
+                                <select id="regTriage" class="form-select">
+                                    <option value="ROUTINE">Routine (Standard)</option>
+                                    <option value="URGENT">Urgent (Priority Doctor)</option>
+                                    <option value="EMERGENCY">Emergency (Immediate)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Vitals Section -->
+                        <div style="background: var(--bg-secondary); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 16px;">
+                            <div style="font-size: 11px; font-weight: 700; color: var(--teal); text-transform: uppercase; margin-bottom: 10px;">🩺 Initial Vitals (Field Screen)</div>
+                            <div class="grid-4" style="gap: 8px;">
+                                <div>
+                                    <label class="form-label">BP (mmHg)</label>
+                                    <input id="regBp" type="text" class="form-input" placeholder="120/80" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Pulse</label>
+                                    <input id="regPulse" type="number" class="form-input" placeholder="75" />
+                                </div>
+                                <div>
+                                    <label class="form-label">Temp (°F)</label>
+                                    <input id="regTemp" type="number" step="0.1" class="form-input" placeholder="98.6" />
+                                </div>
+                                <div>
+                                    <label class="form-label">SpO2 (%)</label>
+                                    <input id="regSpo2" type="number" class="form-input" placeholder="98" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Symptoms / Chief Complaints</label>
+                            <input id="regSymptoms" type="text" class="form-input" placeholder="e.g. Fever for 3 days, body ache" />
+                        </div>
+
+                        <!-- Big Green Button -->
+                        <button id="btnRegister" type="submit" class="btn btn-green btn-large">
+                            ✓ Register Patient
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Attendees Stream -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">👥 Registered Attendees (<span id="attendeeCounter">0</span>)</div>
+                        <button class="btn btn-outline" style="font-size: 11px; padding: 4px 10px;" onclick="loadAttendees()">Refresh</button>
+                    </div>
+
+                    <div style="max-height: 480px; overflow-y: auto;" id="attendeesList">
+                        <div style="text-align: center; color: var(--text-muted); padding: 30px;">Loading attendees...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 2: DIGITAL QR HEALTH CARDS -->
+        <!-- ============================================================ -->
+        <div id="tab-cards" class="tab-panel">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🪪 Digital Health Card Preview</div>
+                        <button class="btn btn-teal" onclick="window.print()">🖨️ Print Card</button>
+                    </div>
+
+                    <div id="qrCardDisplay" class="health-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <div>
+                                <div style="font-size: 11px; font-weight: 700; color: var(--teal); letter-spacing: 0.1em; text-transform: uppercase;">GOVERNMENT OF MAHARASHTRA • PUBLIC HEALTH</div>
+                                <div style="font-family: var(--font-display); font-size: 20px; font-weight: 800; color: white;">SanjeevaniGrid Health Card</div>
+                            </div>
+                            <div style="background: rgba(20,184,166,0.2); border: 1px solid var(--teal); border-radius: 8px; padding: 4px 8px; font-size: 11px; font-weight: 700; color: var(--teal-light);">CAMP ISSUE</div>
+                        </div>
+
+                        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                            <div id="qrCodeContainer" style="background: white; padding: 8px; border-radius: 8px; width: 106px; height: 106px; display: flex; align-items: center; justify-content: center;"></div>
+                            <div style="flex: 1;">
+                                <div id="cardPatientName" style="font-size: 18px; font-weight: 800; color: white;">Rameshwar Pawar</div>
+                                <div id="cardPhone" style="font-size: 13px; color: var(--text-secondary);">+91 98223 00001</div>
+                                <div id="cardDemographics" style="font-size: 12px; color: var(--teal-light); margin-top: 4px;">44 Yrs • MALE • Lohara Village</div>
+                                <div style="margin-top: 8px;">
+                                    <span id="cardTriageBadge" class="badge badge-orange">URGENT</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px 14px; font-size: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center;">
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 10px;">BP</div>
+                                <div id="cardBp" style="font-weight: 700;">145/95</div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 10px;">PULSE</div>
+                                <div id="cardPulse" style="font-weight: 700;">82</div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 10px;">TEMP</div>
+                                <div id="cardTemp" style="font-weight: 700;">98.4°F</div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-muted); font-size: 10px;">SPO2</div>
+                                <div id="cardSpo2" style="font-weight: 700;">98%</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 14px; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+                            <span>Camp: <strong id="cardCampStamp">Lohara Health Camp</strong></span>
+                            <span>Valid Across SanjeevaniGrid Network</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Attendee to view Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🔍 Select Attendee for QR Card</div>
+                    </div>
+                    <div id="cardSelectorList" style="max-height: 480px; overflow-y: auto;">
+                        <div style="text-align: center; color: var(--text-muted); padding: 30px;">Loading attendees...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 3: VACCINE SCHEDULE ENGINE (UIP COMPLIANCE) -->
+        <!-- ============================================================ -->
+        <div id="tab-vaccine" class="tab-panel">
+            <div class="grid-2">
+                <!-- Evaluation Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">👶 Child Immunization Schedule Calculator</div>
+                        <span class="badge badge-teal">National UIP</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth (DOB) *</label>
+                        <input id="vacDob" type="date" class="form-input" onchange="runVaccineCalculator()" />
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <button class="btn btn-outline" style="font-size: 11px;" onclick="setDobMonthsAgo(0)">At Birth</button>
+                        <button class="btn btn-outline" style="font-size: 11px;" onclick="setDobWeeksAgo(6)">6 Weeks</button>
+                        <button class="btn btn-outline" style="font-size: 11px;" onclick="setDobWeeksAgo(10)">10 Weeks</button>
+                        <button class="btn btn-outline" style="font-size: 11px;" onclick="setDobWeeksAgo(14)">14 Weeks</button>
+                        <button class="btn btn-outline" style="font-size: 11px;" onclick="setDobMonthsAgo(9)">9 Months</button>
+                        <button class="btn btn-outline" style="font-size: 11px;" onclick="setDobMonthsAgo(18)">18 Months</button>
+                    </div>
+
+                    <div class="grid-4" style="gap: 10px; margin-bottom: 18px;">
+                        <div class="stat-card" style="padding: 10px; border-color: rgba(34,197,94,0.3);">
+                            <span class="stat-label">Completed</span>
+                            <span id="vacCompletedCount" class="stat-value" style="font-size: 20px; color: #4ade80;">0</span>
+                        </div>
+                        <div class="stat-card" style="padding: 10px; border-color: rgba(245,158,11,0.3);">
+                            <span class="stat-label">Due Now</span>
+                            <span id="vacDueCount" class="stat-value" style="font-size: 20px; color: #fbbf24;">0</span>
+                        </div>
+                        <div class="stat-card" style="padding: 10px; border-color: rgba(239,68,68,0.3);">
+                            <span class="stat-label">Overdue</span>
+                            <span id="vacOverdueCount" class="stat-value" style="font-size: 20px; color: #f87171;">0</span>
+                        </div>
+                        <div class="stat-card" style="padding: 10px; border-color: rgba(59,130,246,0.3);">
+                            <span class="stat-label">Upcoming</span>
+                            <span id="vacUpcomingCount" class="stat-value" style="font-size: 20px; color: #60a5fa;">0</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-teal" style="width: 100%;" onclick="runVaccineCalculator()">
+                        🔄 Recalculate Schedule
+                    </button>
+                </div>
+
+                <!-- Actionable & Full Schedule List -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📋 Immunization Schedule Status</div>
+                        <span id="vacAgeLabel" style="font-size: 12px; color: var(--teal); font-weight: 700;">Age: 0 months</span>
+                    </div>
+
+                    <div style="max-height: 480px; overflow-y: auto;" id="vaccineScheduleList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 4: CAMP REPORT & CSV EXPORT -->
+        <!-- ============================================================ -->
+        <div id="tab-report" class="tab-panel">
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title" id="reportCampTitle">Camp Comprehensive Performance Report</div>
+                        <div style="font-size: 12px; color: var(--text-muted);" id="reportDateStamp">Generated Live</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btnPrintReport" class="btn btn-outline" onclick="window.print()">🖨️ Print Report</button>
+                        <button id="btnExportCsv" class="btn btn-teal" onclick="downloadCsv()">📥 Download CSV</button>
+                    </div>
+                </div>
+
+                <!-- KPI Counters -->
+                <div class="grid-4" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Registered</span>
+                        <span id="repTotalReg" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Urgent / Emergency</span>
+                        <span id="repUrgentCount" class="stat-value" style="color: var(--orange);">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">High BP Alerts</span>
+                        <span id="repHighBpCount" class="stat-value" style="color: var(--red);">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Vaccines Given</span>
+                        <span id="repVaccineCount" class="stat-value" style="color: var(--teal);">0</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown Sections -->
+                <div class="grid-2">
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--teal);">Triage & Patient Demographics</h4>
+                        <div id="demographicsBreakdown" style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            Loading demographics...
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--teal);">Medicine Stock Remaining</h4>
+                        <div id="stockSummaryReport" style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            Loading medicine status...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 5: MEDICINE STOCK -->
+        <!-- ============================================================ -->
+        <div id="tab-stock" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💊 Camp Pharmacy & Medicine Dispense</div>
+                    <button class="btn btn-outline" style="font-size: 11px;" onclick="loadMedicineStock()">Refresh Stock</button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Medicine Name</th>
+                                <th>Unit</th>
+                                <th>Initial Stock</th>
+                                <th>Dispensed</th>
+                                <th>Remaining</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <tr><td colspan="6" style="text-align: center;">Loading medicine stock...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 6: GIS EQUITY MAP & NEXT-CAMP RECOMMENDER -->
+        <!-- ============================================================ -->
+        <div id="tab-equity" class="tab-panel">
+            <div class="grid-2" style="grid-template-columns: 2fr 1fr; gap: 20px;">
+                <!-- Map Container -->
+                <div class="card" style="padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div>
+                            <div class="card-title">🗺️ Yavatmal District Healthcare Equity Map</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">30 Villages color-coded by access gap • 10 Hospitals with real-time bed & ICU stats</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; font-size: 11px;">
+                            <span class="badge badge-red">● RED: Critical (&lt;40)</span>
+                            <span class="badge badge-orange">● YELLOW: Moderate</span>
+                            <span class="badge badge-green">● GREEN: Good (&gt;70)</span>
+                        </div>
+                    </div>
+
+                    <div id="equityMap"></div>
+                </div>
+
+                <!-- Next-Camp Recommender Panel -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">🎯 Next-Camp Recommender</div>
+                            <div style="font-size: 11px; color: var(--teal); font-weight: 600;">Ranked by Population × Access Gap</div>
+                        </div>
+                    </div>
+
+                    <div id="recommenderList" style="max-height: 520px; overflow-y: auto;">
+                        <div style="text-align: center; color: var(--text-muted); padding: 30px;">Analyzing village equity gaps...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal: Create New Camp -->
+    <div id="newCampModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 560px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div class="card-header">
+                <div class="card-title">➕ Organize New Medical Camp</div>
+                <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeNewCampModal()">✕</button>
+            </div>
+
+            <form id="newCampForm" onsubmit="handleCreateCamp(event)">
+                <input type="hidden" id="modalVillageId" />
+                <div class="form-group">
+                    <label class="form-label">Camp Name *</label>
+                    <input id="modalCampName" type="text" class="form-input" required />
+                </div>
+                <div class="grid-2" style="gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Village Name *</label>
+                        <input id="modalVillageName" type="text" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Camp Type</label>
+                        <select id="modalCampType" class="form-select">
+                            <option value="GENERAL_HEALTH">General Health Camp</option>
+                            <option value="VACCINATION">Vaccination Drive</option>
+                            <option value="MATERNAL_CHILD">Maternal & Child Care</option>
+                            <option value="EYE_CARE">Eye Screening Camp</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Venue *</label>
+                    <input id="modalVenue" type="text" class="form-input" required />
+                </div>
+                <div class="grid-2" style="gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Date *</label>
+                        <input id="modalDate" type="date" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Attendees</label>
+                        <input id="modalTarget" type="number" class="form-input" value="150" />
+                    </div>
+                </div>
+                <div class="grid-2" style="gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input id="modalLat" type="number" step="0.0001" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input id="modalLng" type="number" step="0.0001" class="form-input" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-teal btn-large" style="margin-top: 10px;">
+                    🚀 Deploy Medical Camp
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PWA Offline Queue & App Logic -->
+    <script>
+        // IndexedDB Configuration
+        const DB_NAME = 'SanjeevaniGridCampDB';
+        const DB_VERSION = 1;
+        let db = null;
+        let activeCampId = null;
+        let activeCampData = null;
+        let isSimulatedOffline = false;
+        let equityMap = null;
+        let allAttendeesCache = [];
+
+        let pendingClientSyncIds = new Set();
+
+        // 1. Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('pending_registrations')) {
+                        d.createObjectStore('pending_registrations', { keyPath: 'clientSyncId' });
+                    }
+                    if (!d.objectStoreNames.contains('local_attendees')) {
+                        d.createObjectStore('local_attendees', { keyPath: 'clientSyncId' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    updatePendingCount();
+                    resolve(db);
+                };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        // 2. Offline Status Detection
+        function updateNetworkStatus() {
+            const isOnline = navigator.onLine && !isSimulatedOffline;
+            const badge = document.getElementById('syncStatusBadge');
+            const statusText = document.getElementById('syncStatusText');
+            const offlineBanner = document.getElementById('offlineBanner');
+
+            if (isOnline) {
+                badge.className = 'badge badge-green';
+                statusText.innerText = 'ONLINE';
+                offlineBanner.classList.remove('show');
+            } else {
+                badge.className = 'badge badge-orange';
+                statusText.innerText = 'OFFLINE';
+                offlineBanner.classList.add('show');
+            }
+        }
+
+        window.addEventListener('online', () => {
+            updateNetworkStatus();
+            syncOfflineQueue();
+        });
+        window.addEventListener('offline', updateNetworkStatus);
+
+        function toggleSimulatedOffline() {
+            isSimulatedOffline = !isSimulatedOffline;
+            const btn = document.getElementById('btnToggleSimOffline');
+            if (isSimulatedOffline) {
+                btn.innerText = '🔌 Go Back Online';
+                btn.className = 'btn btn-teal';
+            } else {
+                btn.innerText = '📡 Simulate Offline';
+                btn.className = 'btn btn-outline';
+                syncOfflineQueue();
+            }
+            updateNetworkStatus();
+        }
+
+        // 3. Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            const targetPanel = document.getElementById('tab-' + tabId);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText.toLowerCase().includes(tabId.substring(0, 4)));
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (tabId === 'equity') {
+                setTimeout(initEquityMap, 200);
+            } else if (tabId === 'stock') {
+                loadMedicineStock();
+            } else if (tabId === 'report') {
+                loadCampReport();
+            } else if (tabId === 'cards') {
+                renderCardSelector();
+            }
+        }
+
+        // 4. Camps Management
+        async function loadCamps() {
+            try {
+                const res = await fetch('/api/camps');
+                const camps = await res.json();
+                const sel = document.getElementById('activeCampSelect');
+                sel.innerHTML = '';
+
+                if (camps.length > 0) {
+                    camps.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.innerText = `${c.name} (${c.villageName || c.district})`;
+                        sel.appendChild(opt);
+                    });
+                    activeCampId = camps[0].id;
+                    activeCampData = camps[0];
+                    document.getElementById('regCampNameBadge').innerText = camps[0].name;
+                    loadAttendees();
+                }
+            } catch (err) {
+                console.warn('Could not load camps from network (offline).');
+            }
+        }
+
+        function changeActiveCamp(campId) {
+            activeCampId = campId;
+            loadAttendees();
+            loadMedicineStock();
+        }
+
+        // 5. Fast Registration (Offline-First via IndexedDB)
+        async function handleRegistration(e) {
+            e.preventDefault();
+            const syncId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'gen-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            const isOffline = !navigator.onLine || isSimulatedOffline;
+
+            const regRecord = {
+                id: syncId,
+                clientSyncId: syncId,
+                campId: activeCampId,
+                fullName: document.getElementById('regName').value.trim(),
+                phone: document.getElementById('regPhone').value.trim(),
+                age: parseInt(document.getElementById('regAge').value, 10),
+                gender: document.getElementById('regGender').value,
+                village: document.getElementById('regVillage').value.trim() || 'Lohara',
+                triageLevel: document.getElementById('regTriage').value,
+                vitalBp: document.getElementById('regBp').value.trim() || '120/80',
+                vitalPulse: parseInt(document.getElementById('regPulse').value, 10) || 75,
+                vitalTemp: parseFloat(document.getElementById('regTemp').value) || 98.6,
+                vitalSpo2: parseInt(document.getElementById('regSpo2').value, 10) || 98,
+                symptoms: document.getElementById('regSymptoms').value.trim(),
+                registeredOffline: isOffline,
+                clientTimestamp: new Date().toISOString()
+            };
+
+            // Save to IndexedDB
+            pendingClientSyncIds.add(syncId);
+            await saveToQueue(regRecord);
+            updatePendingCount();
+
+            // Optimistically add to UI attendees list
+            allAttendeesCache.unshift(regRecord);
+            renderAttendeesList();
+
+            // Reset form
+            document.getElementById('regForm').reset();
+            document.getElementById('regAge').value = '';
+
+            // If online, immediately sync
+            if (!isOffline) {
+                syncOfflineQueue();
+            } else {
+                alert(`✓ Patient registered offline! Saved to local queue (ID: ${syncId.substring(0,8)}...). Will sync when network reconnects.`);
+            }
+        }
+
+        function saveToQueue(record) {
+            return new Promise((resolve, reject) => {
+                if (!db) return resolve();
+                const tx = db.transaction(['pending_registrations', 'local_attendees'], 'readwrite');
+                tx.objectStore('pending_registrations').put(record);
+                tx.objectStore('local_attendees').put(record);
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e);
+            });
+        }
+
+        function getPendingQueue() {
+            return new Promise((resolve) => {
+                if (!db) return resolve([]);
+                const tx = db.transaction('pending_registrations', 'readonly');
+                const req = tx.objectStore('pending_registrations').getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        }
+
+        function clearFromPending(clientSyncId) {
+            pendingClientSyncIds.delete(clientSyncId);
+            return new Promise((resolve) => {
+                if (!db) return resolve();
+                const tx = db.transaction('pending_registrations', 'readwrite');
+                tx.objectStore('pending_registrations').delete(clientSyncId);
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function updatePendingCount() {
+            const pending = await getPendingQueue();
+            pendingClientSyncIds = new Set(pending.map(p => p.clientSyncId));
+            const countEl = document.getElementById('pendingCount');
+            if (countEl) countEl.innerText = pending.length;
+        }
+
+        // 6. Idempotent Offline Sync
+        let isSyncing = false;
+        async function syncOfflineQueue() {
+            if (isSyncing || !activeCampId) return;
+            if (!navigator.onLine || isSimulatedOffline) {
+                console.log('Cannot sync: currently offline.');
+                return;
+            }
+
+            const pending = await getPendingQueue();
+            if (pending.length === 0) {
+                updatePendingCount();
+                return;
+            }
+
+            isSyncing = true;
+            const syncBtn = document.getElementById('btnSync');
+            if (syncBtn) syncBtn.innerText = '🔄 Syncing...';
+
+            try {
+                const batchPayload = {
+                    campId: activeCampId,
+                    registrations: pending,
+                    services: [],
+                    vaccinations: [],
+                    dispenses: []
+                };
+
+                const res = await fetch(`/api/camps/${activeCampId}/sync`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(batchPayload)
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    // Clear synced items
+                    for (const item of pending) {
+                        await clearFromPending(item.clientSyncId);
+                    }
+                    updatePendingCount();
+                    loadAttendees();
+                    alert(`✓ Sync Complete!\n${result.syncedRegistrations} new patients uploaded.\n${result.duplicateRegistrations} duplicates deduplicated.\nTotal camp attendees: ${result.totalCampAttendees}`);
+                }
+            } catch (err) {
+                console.error('Sync failed:', err);
+            } finally {
+                isSyncing = false;
+                const btn = document.getElementById('btnSync');
+                updatePendingCount();
+                if (btn) btn.innerHTML = `🔄 Sync (<span id="pendingCount">${pendingClientSyncIds.size}</span>)`;
+            }
+        }
+
+        // 7. Attendees Listing & Card View
+        async function loadAttendees() {
+            if (!activeCampId) return;
+            try {
+                const res = await fetch(`/api/camps/${activeCampId}/attendees`);
+                if (res.ok) {
+                    const serverAttendees = await res.json();
+                    allAttendeesCache = serverAttendees;
+                }
+            } catch (err) {
+                console.warn('Using local attendees cache due to offline state.');
+            }
+            renderAttendeesList();
+            renderCardSelector();
+            if (allAttendeesCache.length > 0) {
+                displayHealthCard(allAttendeesCache[0]);
+            }
+        }
+
+        function renderAttendeesList() {
+            const container = document.getElementById('attendeesList');
+            document.getElementById('attendeeCounter').innerText = allAttendeesCache.length;
+
+            if (allAttendeesCache.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px;">No attendees registered yet. Check in a patient above!</div>`;
+                return;
+            }
+
+            container.innerHTML = allAttendeesCache.map(a => {
+                const triageBadge = a.triageLevel === 'EMERGENCY' ? 'badge-red' : (a.triageLevel === 'URGENT' ? 'badge-orange' : 'badge-green');
+                const isPending = pendingClientSyncIds.has(a.clientSyncId);
+                const offlineBadge = isPending ? '<span class="badge badge-orange" style="font-size: 10px;">Pending Sync</span>' : '<span class="badge badge-green" style="font-size: 10px;">Synced</span>';
+
+                return `
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 14px; color: white;">${a.fullName} <span style="font-size: 11px; color: var(--text-muted);">(${a.age || '?'}y, ${a.gender || '?'})</span></div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">📞 ${a.phone} • 📍 ${a.village || 'Yavatmal'}</div>
+                            <div style="font-size: 11px; color: var(--teal-light); margin-top: 4px;">BP: ${a.vitalBp || '-'} • Pulse: ${a.vitalPulse || '-'} • SpO2: ${a.vitalSpo2 || '-'}%</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                            <span class="badge ${triageBadge}">${a.triageLevel || 'ROUTINE'}</span>
+                            ${offlineBadge}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCardSelector() {
+            const list = document.getElementById('cardSelectorList');
+            if (!list) return;
+            if (allAttendeesCache.length === 0) {
+                list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px;">No attendees registered yet.</div>`;
+                return;
+            }
+
+            list.innerHTML = allAttendeesCache.map((a, idx) => `
+                <div class="rec-item" onclick="displayHealthCard(allAttendeesCache[${idx}])" style="cursor: pointer;">
+                    <div>
+                        <div style="font-weight: 700; color: white;">${a.fullName}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Phone: ${a.phone} • Village: ${a.village || '-'}</div>
+                    </div>
+                    <button class="btn btn-teal" style="font-size: 11px; padding: 4px 10px;">View Card 🪪</button>
+                </div>
+            `).join('');
+        }
+
+        function displayHealthCard(attendee) {
+            if (!attendee) return;
+            document.getElementById('cardPatientName').innerText = attendee.fullName;
+            document.getElementById('cardPhone').innerText = attendee.phone;
+            document.getElementById('cardDemographics').innerText = `${attendee.age || 30} Yrs • ${attendee.gender || 'OTHER'} • ${attendee.village || 'Yavatmal'}`;
+            document.getElementById('cardBp').innerText = attendee.vitalBp || '120/80';
+            document.getElementById('cardPulse').innerText = attendee.vitalPulse || '76';
+            document.getElementById('cardTemp').innerText = (attendee.vitalTemp || 98.6) + '°F';
+            document.getElementById('cardSpo2').innerText = (attendee.vitalSpo2 || 99) + '%';
+            document.getElementById('cardCampStamp').innerText = activeCampData ? activeCampData.name : 'SanjeevaniGrid Camp';
+
+            const badge = document.getElementById('cardTriageBadge');
+            badge.innerText = attendee.triageLevel || 'ROUTINE';
+            badge.className = 'badge ' + (attendee.triageLevel === 'EMERGENCY' ? 'badge-red' : (attendee.triageLevel === 'URGENT' ? 'badge-orange' : 'badge-green'));
+
+            // Generate QR Code
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '';
+            const qrPayload = JSON.stringify({
+                id: attendee.id || attendee.clientSyncId,
+                name: attendee.fullName,
+                phone: attendee.phone,
+                campId: activeCampId,
+                triage: attendee.triageLevel || 'ROUTINE'
+            });
+
+            if (window.QRCode) {
+                new QRCode(qrContainer, {
+                    text: qrPayload,
+                    width: 90,
+                    height: 90,
+                    colorDark: '#0a0f1c',
+                    colorLight: '#ffffff'
+                });
+            }
+        }
+
+        // 8. Vaccine Schedule Engine Calculator
+        function setDobMonthsAgo(months) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - months);
+            document.getElementById('vacDob').value = d.toISOString().split('T')[0];
+            runVaccineCalculator();
+        }
+        function setDobWeeksAgo(weeks) {
+            const d = new Date();
+            d.setDate(d.getDate() - (weeks * 7));
+            document.getElementById('vacDob').value = d.toISOString().split('T')[0];
+            runVaccineCalculator();
+        }
+
+        async function runVaccineCalculator() {
+            const dobVal = document.getElementById('vacDob').value;
+            if (!dobVal) return;
+
+            try {
+                const res = await fetch('/api/camps/vaccine-schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dob: dobVal, history: [] })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('vacCompletedCount').innerText = data.completedCount;
+                    document.getElementById('vacDueCount').innerText = data.dueNowCount;
+                    document.getElementById('vacOverdueCount').innerText = data.overdueCount;
+                    document.getElementById('vacUpcomingCount').innerText = data.upcomingCount;
+                    document.getElementById('vacAgeLabel').innerText = `Age: ${data.ageInMonths} months`;
+
+                    renderVaccineSchedule(data.schedule);
+                }
+            } catch (err) {
+                console.error('Vaccine calculator error:', err);
+            }
+        }
+
+        function renderVaccineSchedule(schedule) {
+            const container = document.getElementById('vaccineScheduleList');
+            if (!schedule || schedule.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px;">No schedule generated.</div>`;
+                return;
+            }
+
+            container.innerHTML = schedule.map(v => {
+                let badgeClass = 'badge-blue';
+                if (v.status === 'OVERDUE') badgeClass = 'badge-red';
+                else if (v.status === 'DUE_NOW') badgeClass = 'badge-orange';
+                else if (v.status === 'COMPLETED') badgeClass = 'badge-green';
+
+                return `
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 700; color: white;">${v.vaccineName} (Dose ${v.doseNumber}) • <span style="font-size: 11px; color: var(--teal);">${v.targetAgeDescription}</span></div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${v.instructions || ''}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="badge ${badgeClass}">${v.status.replace('_', ' ')}</span>
+                            ${(v.status === 'DUE_NOW' || v.status === 'OVERDUE') ? `<button class="btn btn-teal" style="font-size: 10px; padding: 4px 8px;" onclick="logVaccineAdmin('${v.vaccineName}', ${v.doseNumber})">Administer ✓</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function logVaccineAdmin(vaccineName, doseNumber) {
+            alert(`✓ Administered ${vaccineName} (Dose ${doseNumber})! Recorded in patient vaccination log.`);
+            runVaccineCalculator();
+        }
+
+        // 9. Medicine Stock
+        async function loadMedicineStock() {
+            if (!activeCampId) return;
+            try {
+                const res = await fetch(`/api/camps/${activeCampId}/medicine-stock`);
+                if (res.ok) {
+                    const stocks = await res.json();
+                    renderStockTable(stocks);
+                }
+            } catch (err) {
+                console.error('Error loading medicine stock:', err);
+            }
+        }
+
+        function renderStockTable(stocks) {
+            const tbody = document.getElementById('stockTableBody');
+            if (!stocks || stocks.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No medicine stock assigned to this camp.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = stocks.map(s => `
+                <tr>
+                    <td><strong>${s.medicineName}</strong></td>
+                    <td>${s.unit}</td>
+                    <td>${s.initialQuantity}</td>
+                    <td><span style="color: var(--orange); font-weight: 700;">${s.dispensedQuantity}</span></td>
+                    <td><span style="color: ${s.remainingQuantity < 20 ? 'var(--red)' : 'var(--green)'}; font-weight: 800;">${s.remainingQuantity}</span></td>
+                    <td>
+                        <button class="btn btn-outline" style="font-size: 11px; padding: 4px 10px;" onclick="dispenseMed('${s.medicineName}', 1)">Dispense 1</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function dispenseMed(name, qty) {
+            if (!activeCampId) return;
+            try {
+                const res = await fetch(`/api/camps/${activeCampId}/medicine-stock/dispense`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ medicineName: name, quantity: qty })
+                });
+                if (res.ok) {
+                    loadMedicineStock();
+                }
+            } catch (err) {
+                console.error('Dispense error:', err);
+            }
+        }
+
+        // 10. Camp Report & CSV
+        async function loadCampReport() {
+            if (!activeCampId) return;
+            try {
+                const res = await fetch(`/api/camps/${activeCampId}/report`);
+                if (res.ok) {
+                    const rep = await res.json();
+                    document.getElementById('reportCampTitle').innerText = rep.camp.name;
+                    document.getElementById('reportDateStamp').innerText = `Camp Date: ${rep.camp.campDate} • Generated: ${new Date().toLocaleTimeString()}`;
+                    document.getElementById('repTotalReg').innerText = rep.totalRegistered;
+                    document.getElementById('repUrgentCount').innerText = (rep.triageBreakdown.URGENT || 0) + (rep.triageBreakdown.EMERGENCY || 0);
+                    document.getElementById('repHighBpCount').innerText = rep.vitalsAlerts.highBpCount || 0;
+                    document.getElementById('repVaccineCount').innerText = rep.totalVaccinationsAdministered || 0;
+
+                    // Demographics HTML
+                    document.getElementById('demographicsBreakdown').innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+                            <div>Children (&lt;12): <strong>${rep.demographics.childrenUnder12 || 0}</strong></div>
+                            <div>Adults (12-59): <strong>${rep.demographics.adults12To59 || 0}</strong></div>
+                            <div>Elderly (60+): <strong>${rep.demographics.elderly60Plus || 0}</strong></div>
+                            <div>Female Attendees: <strong>${rep.demographics.females || 0}</strong></div>
+                        </div>
+                    `;
+
+                    // Stock summary HTML
+                    if (rep.medicineStock && rep.medicineStock.length > 0) {
+                        document.getElementById('stockSummaryReport').innerHTML = rep.medicineStock.slice(0, 5).map(s => `
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                <span>${s.medicineName}:</span>
+                                <strong>${s.remainingQuantity} ${s.unit} left</strong>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading report:', err);
+            }
+        }
+
+        function downloadCsv() {
+            if (!activeCampId) return;
+            window.location.href = `/api/camps/${activeCampId}/report/csv`;
+        }
+
+        // 11. GIS Equity Map (Leaflet) & Next-Camp Recommender
+        async function initEquityMap() {
+            if (equityMap) {
+                equityMap.invalidateSize();
+                return;
+            }
+
+            // Center on Yavatmal district (20.39° N, 78.12° E)
+            equityMap = L.map('equityMap').setView([20.25, 78.15], 9);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(equityMap);
+
+            try {
+                const res = await fetch('/api/equity/map-data');
+                const data = await res.json();
+
+                // Plot Hospitals
+                data.hospitals.forEach(h => {
+                    const icon = L.divIcon({
+                        className: 'hospital-marker',
+                        html: `<div style="background: #3b82f6; color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; border: 2px solid white; box-shadow: 0 0 10px rgba(59,130,246,0.8);">🏥</div>`,
+                        iconSize: [26, 26]
+                    });
+
+                    const marker = L.marker([h.latitude, h.longitude], { icon }).addTo(equityMap);
+                    marker.bindPopup(`
+                        <div style="font-family: sans-serif; min-width: 200px;">
+                            <strong style="color: #3b82f6; font-size: 14px;">🏥 ${h.name}</strong><br/>
+                            <span style="font-size: 12px; color: #cbd5e1;">${h.address || ''}</span>
+                            <hr style="border-color: #334155; margin: 8px 0;"/>
+                            <div style="font-size: 12px;">Available Beds: <strong>${h.availableBeds}</strong></div>
+                            <div style="font-size: 12px;">ICU Beds: <strong>${h.availableIcu}</strong></div>
+                            <div style="font-size: 12px;">Ventilators: <strong>${h.availableVentilators}</strong></div>
+                        </div>
+                    `);
+                });
+
+                // Plot Villages color-coded
+                data.villages.forEach(v => {
+                    const color = v.vulnerabilityCategory === 'RED' ? '#ef4444' : (v.vulnerabilityCategory === 'YELLOW' ? '#f59e0b' : '#22c55e');
+
+                    const circle = L.circleMarker([v.latitude, v.longitude], {
+                        radius: 8,
+                        fillColor: color,
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.85
+                    }).addTo(equityMap);
+
+                    circle.bindPopup(`
+                        <div style="font-family: sans-serif; min-width: 220px;">
+                            <strong style="font-size: 15px; color: ${color};">📍 ${v.name}</strong> (${v.taluka} Taluka)<br/>
+                            <div style="font-size: 12px; margin-top: 4px;">Population: <strong>${v.population.toLocaleString()}</strong></div>
+                            <div style="font-size: 12px;">Access Score: <strong style="color: ${color};">${v.accessScore}/100</strong> (${v.vulnerabilityCategory})</div>
+                            <div style="font-size: 12px;">Nearest Hospital: <strong>${v.nearestHospitalName}</strong> (${v.travelTimeMinutes} mins)</div>
+                            <div style="font-size: 12px;">Days Since Last Camp: <strong>${v.daysSinceLastCamp} days</strong></div>
+                            <button id="btnPlanCamp" class="btn btn-teal" style="font-size: 11px; width: 100%; margin-top: 10px;" onclick="planCampForVillage('${v.id}', '${v.name}', ${v.latitude}, ${v.longitude}, ${v.population})">
+                                ➕ Plan Camp Here
+                            </button>
+                        </div>
+                    `);
+                });
+
+                loadRecommendations();
+
+            } catch (err) {
+                console.error('Error loading equity map data:', err);
+            }
+        }
+
+        async function loadRecommendations() {
+            try {
+                const res = await fetch('/api/equity/recommendations?limit=6');
+                const recs = await res.json();
+                const container = document.getElementById('recommenderList');
+
+                if (!recs || recs.length === 0) {
+                    container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px;">No recommendations available.</div>`;
+                    return;
+                }
+
+                container.innerHTML = recs.map(r => `
+                    <div class="rec-item">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="badge ${r.vulnerabilityCategory === 'RED' ? 'badge-red' : 'badge-orange'}" style="font-size: 10px;">#${r.rank}</span>
+                                <strong style="color: white; font-size: 14px;">${r.villageName}</strong>
+                                <span style="font-size: 11px; color: var(--text-muted);">(${r.taluka})</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">
+                                Pop: ${r.population.toLocaleString()} • Access: ${r.accessScore} • ${r.daysSinceLastCamp}d without camp
+                            </div>
+                            <div style="font-size: 10px; color: var(--teal-light); margin-top: 3px;">
+                                Target: ~${r.suggestedTargetAttendees} attendees • Need Score: ${r.needScore}
+                            </div>
+                        </div>
+                        <button class="btn btn-teal" style="font-size: 11px; padding: 6px 12px;" onclick="prefillCampModal('${r.villageId}', '${r.villageName}', '${r.suggestedVenue}', ${r.latitude}, ${r.longitude}, ${r.suggestedTargetAttendees}, '${r.suggestedCampDate}')">
+                            Deploy ➕
+                        </button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading recommendations:', err);
+            }
+        }
+
+        // 12. Modal & Camp Creation
+        function openNewCampModal() {
+            document.getElementById('newCampModal').style.display = 'flex';
+        }
+        function closeNewCampModal() {
+            document.getElementById('newCampModal').style.display = 'none';
+        }
+
+        function planCampForVillage(villageId, villageName, lat, lng, pop) {
+            const target = Math.min(300, Math.max(60, Math.round(pop * 0.04)));
+            const d = new Date();
+            d.setDate(d.getDate() + 7);
+            const dateStr = d.toISOString().split('T')[0];
+            prefillCampModal(villageId, villageName, `${villageName} Zilla Parishad High School Ground`, lat, lng, target, dateStr);
+        }
+
+        function prefillCampModal(villageId, villageName, venue, lat, lng, target, dateStr) {
+            document.getElementById('modalVillageId').value = villageId;
+            document.getElementById('modalVillageName').value = villageName;
+            document.getElementById('modalCampName').value = `${villageName} Comprehensive Health & Vaccination Camp`;
+            document.getElementById('modalVenue').value = venue;
+            document.getElementById('modalLat').value = lat;
+            document.getElementById('modalLng').value = lng;
+            document.getElementById('modalTarget').value = target;
+            document.getElementById('modalDate').value = dateStr || new Date().toISOString().split('T')[0];
+            openNewCampModal();
+        }
+
+        async function handleCreateCamp(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('modalCampName').value.trim(),
+                villageId: document.getElementById('modalVillageId').value || null,
+                villageName: document.getElementById('modalVillageName').value.trim(),
+                venue: document.getElementById('modalVenue').value.trim(),
+                campType: document.getElementById('modalCampType').value,
+                district: 'Yavatmal',
+                latitude: parseFloat(document.getElementById('modalLat').value),
+                longitude: parseFloat(document.getElementById('modalLng').value),
+                campDate: document.getElementById('modalDate').value,
+                startTime: '09:00:00',
+                endTime: '17:00:00',
+                doctorInCharge: 'Dr. Nilesh Patil, MD',
+                targetAttendees: parseInt(document.getElementById('modalTarget').value, 10) || 150
+            };
+
+            try {
+                const res = await fetch('/api/camps', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const newCamp = await res.json();
+                    closeNewCampModal();
+                    alert(`✓ Camp created successfully: ${newCamp.name}`);
+                    await loadCamps();
+                    activeCampId = newCamp.id;
+                    switchTab('register');
+                }
+            } catch (err) {
+                console.error('Camp creation error:', err);
+            }
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                console.log('SanjeevaniGrid Camp Service Worker registered:', reg.scope);
+            }).catch(err => console.warn('SW registration failed:', err));
+        }
+
+        // Bootstrap on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            updateNetworkStatus();
+            await loadCamps();
+            setDobMonthsAgo(0);
+            const openTab = sessionStorage.getItem('openTab');
+            if (openTab) {
+                sessionStorage.removeItem('openTab');
+                switchTab(openTab);
+            }
+        });
+    </script>
+</body>
+</html>

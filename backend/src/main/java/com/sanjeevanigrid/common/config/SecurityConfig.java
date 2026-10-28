@@ -57,6 +57,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/blood/**").permitAll()
                 .requestMatchers("/api/feed/**").permitAll()
                 .requestMatchers("/api/integration/**").permitAll()
+                .requestMatchers("/api/camps/**").permitAll()
+                .requestMatchers("/api/equity/**").permitAll()
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
                 // All other API endpoints require authentication

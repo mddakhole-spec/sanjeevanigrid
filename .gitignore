@@ -35,6 +35,10 @@ logs/
 .cache/
 coverage/
 
+# Testing
+test-results/
+playwright-report/
+
 # Local databases and uploads
 *.db
 *.sqlite
